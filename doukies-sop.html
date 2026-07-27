@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Doukies — SOP Runner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1b1613;
+    --surface:#241e18;
+    --surface-raised:#2c241d;
+    --border:#3c332a;
+    --border-soft:#332b23;
+    --amber:#e3a73e;
+    --amber-dim:#8a6a2e;
+    --cinnamon:#c1552e;
+    --sage:#93a86a;
+    --text-primary:#f6eee1;
+    --text-secondary:#b7a892;
+    --text-muted:#8a7d69;
+    --danger:#c1552e;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text-primary);font-family:'Inter',sans-serif;-webkit-tap-highlight-color:transparent;}
+  body{padding-bottom:76px;}
+  h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;margin:0;}
+  .wrap{max-width:520px;margin:0 auto;padding:16px 16px 8px;}
+  /* header */
+  .brand{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;}
+  .brand h1{font-size:22px;letter-spacing:0.2px;}
+  .brand .tag{font-size:11px;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;letter-spacing:0.5px;text-transform:uppercase;}
+  .batchbar{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:14px;}
+  .batchbar-row{display:flex;gap:8px;margin-bottom:8px;}
+  .batchbar-row:last-child{margin-bottom:0;}
+  .field{flex:1;display:flex;flex-direction:column;gap:4px;}
+  .field label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;}
+  .field input,.field select,.field textarea{background:var(--surface-raised);border:1px solid var(--border);color:var(--text-primary);border-radius:8px;padding:8px 9px;font-size:14px;font-family:'Inter',sans-serif;width:100%;}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--amber-dim);}
+  .progresswrap{display:flex;align-items:center;gap:10px;margin-top:10px;}
+  .progressbar{flex:1;height:7px;background:var(--surface-raised);border-radius:99px;overflow:hidden;border:1px solid var(--border);}
+  .progressbar-fill{height:100%;background:var(--amber);border-radius:99px;transition:width .3s ease;}
+  .progresstext{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-secondary);white-space:nowrap;}
+  .newbatch{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cinnamon);background:none;border:1px solid var(--border);padding:4px 9px;border-radius:7px;cursor:pointer;letter-spacing:.3px;text-transform:uppercase;}
+  .newbatch:active{transform:scale(0.97);}
+  /* tabs */
+  .tabbar{position:fixed;bottom:0;left:0;right:0;background:#1f1a15;border-top:1px solid var(--border);display:flex;z-index:50;}
+  .tabbtn{flex:1;background:none;border:none;color:var(--text-muted);font-family:'Inter',sans-serif;font-size:12px;padding:11px 0 9px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .tabbtn.active{color:var(--amber);}
+  .tabdot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:0;}
+  .tabbtn.active .tabdot{opacity:1;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  /* stage / task */
+  .stage-head{display:flex;align-items:center;gap:10px;margin:22px 0 10px;}
+  .stage-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--bg);background:var(--amber);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:600;}
+  .stage-head h2{font-size:16px;color:var(--text-primary);}
+  .stage-sub{font-size:11px;color:var(--text-muted);margin-left:32px;margin-top:-6px;margin-bottom:10px;font-family:'IBM Plex Mono',monospace;}
+  .task{background:var(--surface);border:1px solid var(--border);border-radius:13px;margin-bottom:9px;overflow:hidden;}
+  .task.done{border-color:var(--amber-dim);}
+  .task-head{display:flex;align-items:center;gap:11px;padding:13px 14px;cursor:pointer;}
+  .check{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--surface-raised);}
+  .check.checked{background:var(--amber);border-color:var(--amber);color:#1b1613;font-weight:700;}
+  .task-title{flex:1;font-size:14.5px;font-weight:500;}
+  .task.done .task-title{color:var(--text-secondary);text-decoration:line-through;text-decoration-color:var(--border);}
+  .chev{color:var(--text-muted);font-size:11px;transition:transform .2s;}
+  .task.open .chev{transform:rotate(90deg);}
+  .task-body{display:none;padding:0 14px 16px 47px;}
+  .task.open .task-body{display:block;}
+  .notes{margin:0 0 10px;padding:0;list-style:none;}
+  .notes li{font-size:13.5px;color:var(--text-secondary);padding:3px 0 3px 14px;position:relative;line-height:1.5;}
+  .notes li::before{content:'–';position:absolute;left:0;color:var(--text-muted);}
+  .warn{background:rgba(193,85,46,0.12);border:1px solid rgba(193,85,46,0.4);border-radius:9px;padding:9px 11px;font-size:12.5px;color:#e2a58c;margin:8px 0;line-height:1.5;}
+  .warn b{color:var(--cinnamon);}
+  .sublist{margin:8px 0;}
+  .subitem{display:flex;align-items:center;gap:9px;padding:6px 0;font-size:13.5px;color:var(--text-primary);cursor:pointer;}
+  .subcheck{width:17px;height:17px;border-radius:5px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;background:var(--surface-raised);}
+  .subcheck.checked{background:var(--sage);border-color:var(--sage);color:#1b1613;}
+  .subitem.checked span.lbl{color:var(--text-secondary);text-decoration:line-through;text-decoration-color:var(--border);}
+  /* timer */
+  .timerbox{margin-top:12px;background:var(--surface-raised);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:16px;}
+  .dialwrap{position:relative;width:78px;height:78px;flex-shrink:0;}
+  .dialwrap svg{transform:rotate(-90deg);}
+  .dialtext{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;}
+  .timerinfo{flex:1;}
+  .timerlabel{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;font-family:'IBM Plex Mono',monospace;}
+  .timerrange{font-size:12.5px;color:var(--text-secondary);margin-bottom:9px;}
+  .timerbtns{display:flex;gap:8px;}
+  .tbtn{font-family:'Inter',sans-serif;font-size:12.5px;font-weight:500;padding:6px 13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-primary);cursor:pointer;}
+  .tbtn.primary{background:var(--amber);color:#1b1613;border-color:var(--amber);}
+  .tbtn:active{transform:scale(0.96);}
+  .zonepill{font-size:10px;font-family:'IBM Plex Mono',monospace;padding:2px 7px;border-radius:99px;margin-left:6px;}
+  .zonepill.under{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);}
+  .zonepill.target{background:rgba(147,168,106,0.18);color:var(--sage);border:1px solid rgba(147,168,106,0.4);}
+  .zonepill.over{background:rgba(193,85,46,0.18);color:var(--cinnamon);border:1px solid rgba(193,85,46,0.4);}
+  /* log */
+  .logform{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:16px;}
+  .logform h3{font-size:14px;margin-bottom:10px;}
+  .logsave{width:100%;background:var(--amber);color:#1b1613;border:none;border-radius:9px;padding:11px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-top:6px;}
+  .logsave:active{transform:scale(0.98);}
+  .logentry{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;}
+  .logentry-top{display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-secondary);}
+  .logentry-result{font-weight:600;}
+  .logentry-result.pass{color:var(--sage);}
+  .logentry-result.fail{color:var(--cinnamon);}
+  .logentry-detail{font-size:12.5px;color:var(--text-secondary);margin-top:7px;line-height:1.6;display:none;}
+  .logentry.open .logentry-detail{display:block;}
+  .logentry-del{font-size:11px;color:var(--text-muted);background:none;border:none;cursor:pointer;text-decoration:underline;margin-top:8px;}
+  .empty{color:var(--text-muted);font-size:13px;text-align:center;padding:30px 10px;}
+  /* reference */
+  .refcard{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:13px 15px;margin-bottom:9px;}
+  .refcard h3{font-size:13.5px;color:var(--amber);margin-bottom:7px;}
+  .refcard ul{margin:0;padding-left:16px;}
+  .refcard li{font-size:13px;color:var(--text-secondary);padding:2px 0;line-height:1.5;}
+  .reftitle{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-family:'IBM Plex Mono',monospace;margin:20px 0 8px;}
+  .reftitle:first-child{margin-top:0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <div>
+      <h1>Doukies</h1>
+      <div class="tag">Yeast donuts &amp; pastry cream · SOP v2.0</div>
+    </div>
+  </div>
+
+  <div class="batchbar">
+    <div class="batchbar-row">
+      <div class="field"><label>Employee</label><input id="f-employee" type="text" placeholder="Name"></div>
+      <div class="field"><label>Batch #</label><input id="f-batch" type="text" placeholder="e.g. 014"></div>
+    </div>
+    <div class="progresswrap">
+      <div class="progressbar"><div class="progressbar-fill" id="progressfill" style="width:0%"></div></div>
+      <div class="progresstext" id="progresstext">0 / 0</div>
+      <button class="newbatch" id="newbatchbtn">New batch</button>
+    </div>
+  </div>
+
+  <div class="panel active" id="panel-run"></div>
+  <div class="panel" id="panel-log"></div>
+  <div class="panel" id="panel-ref"></div>
+
+</div>
+
+<div class="tabbar">
+  <button class="tabbtn active" data-tab="run"><span>Run</span><span class="tabdot"></span></button>
+  <button class="tabbtn" data-tab="log"><span>Log</span><span class="tabdot"></span></button>
+  <button class="tabbtn" data-tab="ref"><span>Reference</span><span class="tabdot"></span></button>
+</div>
+
+<script>
+(function(){
+
+/* ---------- DATA ---------- */
+
+var STAGES = [
+  { title: "Setup", tasks: [
+    { id:"eq", title:"Equipment check", notes:[],
+      sub:["Mixer","Digital scale","Probe thermometer","Timer","Fryer","Cooling racks","Piping bags","Proofer filled with water","Thermometer / hygrometer"] },
+    { id:"ing-dough", title:"Weigh dough ingredients", notes:["Ingredient temps — eggs 4–8°C, milk 0–4°C, water 0–4°C, butter/margarine 8–12°C","Target final dough temp: 24–26°C"],
+      sub:["Flour 1000 g","Sugar 110 g","Milk powder 35 g","Instant yeast 14 g","Eggs 200 g","Ice water 220 g","Cold milk 160 g","Unsalted butter 90 g","Margarine 30 g","Salt 18 g","Vanilla bean paste 1 tbsp"] },
+    { id:"ing-cream", title:"Weigh pastry cream ingredients", notes:[],
+      sub:["Whole milk 1000 g","Egg yolks 200 g","Sugar 200 g","Cornstarch 80 g","Butter 50 g","Vanilla bean paste 10 g","Heavy cream 200–300 g (added later, cold)"] },
+    { id:"premix", title:"Pre-mix setup", notes:[],
+      sub:["Turn on proofer — target 31°C, 75–85% humidity","Fill the water basin","Turn on fryer — target 155–160°C"] }
+  ]},
+  { title: "Mixing", sub:"Dough mixing and pastry-cream cooking run at the same time.", tasks: [
+    { id:"mix1", title:"Stage 1 — Incorporation", timer:{min:4,max:6},
+      notes:["Speed 1","Add: flour, sugar, milk powder, yeast, eggs, water, milk, vanilla"],
+      sub:["No dry flour remaining","Rough dough formed"] },
+    { id:"mix2", title:"Stage 2 — Gluten development", timer:{min:5,max:8},
+      notes:["Speed 2"],
+      sub:["Dough smooth","Bowl becoming clean","Medium gluten development"] },
+    { id:"mix3", title:"Stage 3 — Fat incorporation", timer:{min:2,max:3},
+      notes:["Speed 1","Add: salt, butter, margarine"],
+      sub:["Fat completely incorporated"] },
+    { id:"mix4", title:"Stage 4 — Final development", timer:{min:2,max:5},
+      notes:["Speed 2 — stop only when all criteria below are met"],
+      warn:"If dough reaches 27°C before full development: stop and inform the supervisor.",
+      sub:["Thin windowpane","Smooth elastic dough","Final dough temperature 24–26°C"] },
+    { id:"cream-cook", title:"Cook pastry cream", timer:{min:1,max:2}, timerNote:"time the boil-through step (82–85°C)",
+      notes:["Heat milk + half the sugar to 70–80°C","Whisk yolks + remaining sugar + cornstarch","Temper yolk mix with hot milk, then return to saucepan","Cook while whisking continuously","After it boils, cook 1–2 minutes at 82–85°C (time it →)","Remove from heat, add butter and vanilla","Strain"],
+      sub:[] },
+    { id:"cream-chill", title:"Chill pastry cream", notes:["Cover with plastic wrap touching the surface","Chill until below 4°C before beating"], sub:[] }
+  ]},
+  { title: "Dividing & rounding", tasks: [
+    { id:"divide", title:"Divide dough", notes:["Divide immediately — no bulk fermentation","Every piece must be weighed"],
+      sub:["Large pieces: 55 ±1 g","Mini pieces: 30 ±1 g"] },
+    { id:"round", title:"Round dough", notes:["Never: flatten · press · tear · leave holes"],
+      sub:["Top is smooth","Bottom has a small sealed seam"] }
+  ]},
+  { title: "Tray loading & proofing", tasks: [
+    { id:"tray", title:"Load trays", notes:["Place into the proofer immediately after loading"],
+      sub:["Trays lightly oiled or lined with parchment squares","Large pieces spaced 5–7 cm apart","Mini pieces spaced 3–4 cm apart"] },
+    { id:"proof", title:"Proof", timer:{min:40,max:50}, timerNote:"start checking at 40 min, then re-check every 5–10 min",
+      notes:["Proofer target: 31°C, 75–85% humidity","Finger test: press gently on the side"],
+      warn:"Immediate bounce back = underproofed. Dent stays / doesn't spring back = overproofed.",
+      sub:["70–80% larger than raw size","Soft and light","Dent slowly springs back = ready"] }
+  ]},
+  { title: "Filling prep (while proofing)", tasks: [
+    { id:"beatcream", title:"Finish pastry cream", notes:["Beat chilled cream until smooth","Gradually add 200–300 g cold heavy cream","Mix until smooth and pipeable"],
+      sub:["Piping bags filled","Filling station ready"] }
+  ]},
+  { title: "Frying", tasks: [
+    { id:"fryprep", title:"Prepare for frying", notes:["Only remove trays that are fully proofed and ready — keep the rest in the proofer"],
+      sub:["Oil at 155–160°C","Cooling racks ready"] },
+    { id:"fry", title:"Fry", notes:["Load gently — do not squeeze the donuts, do not touch the top surface","Flip once only"],
+      sub:["Internal temperature reaches 93–96°C"] }
+  ]},
+  { title: "Cooling & finishing", tasks: [
+    { id:"cool", title:"Cool", notes:["Cool on wire racks — do not stack","Fill only once below 30°C"], sub:[] },
+    { id:"finish", title:"Fill, decorate, package", notes:[], sub:["Donuts filled","Decorated","Packaged"] }
+  ]},
+  { title: "Quality check", tasks: [
+    { id:"qc", title:"Batch quality check", notes:[],
+      sub:["Uniform size","Good height","Smooth surface","White ring","Even golden color","Soft crumb","No collapse","Minimal oil absorption"] }
+  ]}
+];
+
+var TROUBLESHOOTING = [
+  { title:"Dough too warm", items:["Warm ingredients","Excessive mixing"] },
+  { title:"Dough sticky", items:["Warm dough","Overmixing","Overproofing"] },
+  { title:"Donuts collapse", items:["Overproofed","Weak dough","Rough handling"] },
+  { title:"Excess oil absorption", items:["Underproofed","Overproofed","Oil temperature too low","Weak dough structure"] },
+  { title:"Poor white ring", items:["Incorrect proofing","Rough transfer","More than one flip","Incorrect oil temperature"] }
+];
+
+/* ---------- STATE ---------- */
+
+var state = { employee:"", batch:"", checks:{}, subchecks:{}, timerElapsed:{}, timerRunning:{}, timerStartedAt:{} };
+var records = [];
+var openTasks = {};
+var openLogs = {};
+var tickHandle = null;
+
+function allTaskIds(){
+  var ids = [];
+  STAGES.forEach(function(s){ s.tasks.forEach(function(t){ ids.push(t.id); }); });
+  return ids;
+}
+
+function save(){
+  try{ localStorage.setItem('doukies-run-state', JSON.stringify(state)); }catch(e){}
+}
+function saveRecords(){
+  try{ localStorage.setItem('doukies-records', JSON.stringify(records)); }catch(e){}
+}
+
+function load(){
+  try{
+    var raw = localStorage.getItem('doukies-run-state');
+    if(raw){ var loaded = JSON.parse(raw); Object.assign(state, loaded); }
+  }catch(e){}
+  document.getElementById('f-employee').value = state.employee || "";
+  document.getElementById('f-batch').value = state.batch || "";
+  renderRun();
+  try{
+    var raw2 = localStorage.getItem('doukies-records');
+    if(raw2){ records = JSON.parse(raw2) || []; }
+  }catch(e){}
+  renderLog();
+}
+
+/* ---------- RENDER: RUN ---------- */
+
+function fmtTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;
+}
+
+function taskElapsed(t){
+  var base = state.timerElapsed[t.id] || 0;
+  if(state.timerRunning[t.id] && state.timerStartedAt[t.id]){
+    base += (Date.now() - state.timerStartedAt[t.id]) / 1000;
+  }
+  return base;
+}
+
+function dialSvg(t, elapsed){
+  var min = t.timer.min*60, max = t.timer.max*60;
+  var frac = Math.min(elapsed/max, 1);
+  var r = 33, c = 2*Math.PI*r;
+  var zone = elapsed < min ? "under" : (elapsed <= max ? "target" : "over");
+  var color = zone==="under" ? "#8a7d69" : (zone==="target" ? "#93a86a" : "#c1552e");
+  var minFrac = Math.min(min/max, 1);
+  return '<svg width="78" height="78" viewBox="0 0 78 78">'+
+    '<circle cx="39" cy="39" r="'+r+'" fill="none" stroke="#3c332a" stroke-width="6"/>'+
+    '<circle cx="39" cy="39" r="'+r+'" fill="none" stroke="#584a37" stroke-width="6" stroke-dasharray="'+(c*minFrac)+' '+c+'" stroke-linecap="round"/>'+
+    '<circle cx="39" cy="39" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="6" stroke-dasharray="'+(c*frac)+' '+c+'" stroke-linecap="round"/>'+
+    '</svg>';
+}
+
+function taskCard(t, idx, globalIdx){
+  var done = !!state.checks[t.id];
+  var open = !!openTasks[t.id];
+  var html = '<div class="task '+(done?'done ':'')+(open?'open':'')+'" data-task="'+t.id+'">';
+  html += '<div class="task-head" data-action="toggleopen" data-id="'+t.id+'">';
+  html += '<div class="check '+(done?'checked':'')+'" data-action="togglecheck" data-id="'+t.id+'">'+(done?'✓':'')+'</div>';
+  html += '<div class="task-title">'+t.title+'</div>';
+  html += '<div class="chev">›</div></div>';
+  html += '<div class="task-body">';
+  if(t.notes && t.notes.length){
+    html += '<ul class="notes">' + t.notes.map(function(n){ return '<li>'+n+'</li>'; }).join('') + '</ul>';
+  }
+  if(t.warn){
+    html += '<div class="warn"><b>Watch for:</b> '+t.warn+'</div>';
+  }
+  if(t.sub && t.sub.length){
+    html += '<div class="sublist">';
+    t.sub.forEach(function(label, i){
+      var key = t.id+'-'+i;
+      var checked = !!(state.subchecks[t.id] && state.subchecks[t.id][i]);
+      html += '<div class="subitem '+(checked?'checked':'')+'" data-action="togglesub" data-id="'+t.id+'" data-i="'+i+'">';
+      html += '<div class="subcheck '+(checked?'checked':'')+'">'+(checked?'✓':'')+'</div><span class="lbl">'+label+'</span></div>';
+    });
+    html += '</div>';
+  }
+  if(t.timer){
+    var elapsed = taskElapsed(t);
+    var running = !!state.timerRunning[t.id];
+    var zone = elapsed < t.timer.min*60 ? "under" : (elapsed <= t.timer.max*60 ? "target" : "over");
+    var zoneLabel = zone==="under" ? "below target" : (zone==="target" ? "in target range" : "past target");
+    html += '<div class="timerbox">';
+    html += '<div class="dialwrap" id="dial-'+t.id+'">'+dialSvg(t, elapsed)+'<div class="dialtext" id="digits-'+t.id+'">'+fmtTime(elapsed)+'</div></div>';
+    html += '<div class="timerinfo">';
+    html += '<div class="timerlabel">Timer <span class="zonepill '+zone+'" id="zone-'+t.id+'">'+zoneLabel+'</span></div>';
+    html += '<div class="timerrange">Target '+t.timer.min+'–'+t.timer.max+' min'+(t.timerNote?' · '+t.timerNote:'')+'</div>';
+    html += '<div class="timerbtns">';
+    html += '<button class="tbtn primary" data-action="timertoggle" data-id="'+t.id+'">'+(running?'Pause':(elapsed>0?'Resume':'Start'))+'</button>';
+    html += '<button class="tbtn" data-action="timerreset" data-id="'+t.id+'">Reset</button>';
+    html += '</div></div></div>';
+  }
+  html += '</div></div>';
+  return html;
+}
+
+function renderRun(){
+  var el = document.getElementById('panel-run');
+  var html = "";
+  var num = 1;
+  STAGES.forEach(function(stage){
+    html += '<div class="stage-head"><div class="stage-num">'+num+'</div><h2>'+stage.title+'</h2></div>';
+    if(stage.sub) html += '<div class="stage-sub">'+stage.sub+'</div>';
+    stage.tasks.forEach(function(t){ html += taskCard(t); });
+    num++;
+  });
+  el.innerHTML = html;
+  updateProgress();
+}
+
+function updateProgress(){
+  var ids = allTaskIds();
+  var done = ids.filter(function(id){ return state.checks[id]; }).length;
+  document.getElementById('progressfill').style.width = (ids.length? (done/ids.length*100):0)+'%';
+  document.getElementById('progresstext').textContent = done+' / '+ids.length;
+}
+
+/* ---------- TIMER TICK ---------- */
+
+function startTick(){
+  if(tickHandle) return;
+  tickHandle = setInterval(function(){
+    var anyRunning = false;
+    STAGES.forEach(function(stage){
+      stage.tasks.forEach(function(t){
+        if(!t.timer) return;
+        if(state.timerRunning[t.id]){
+          anyRunning = true;
+          var elapsed = taskElapsed(t);
+          var digits = document.getElementById('digits-'+t.id);
+          if(digits) digits.textContent = fmtTime(elapsed);
+          var dial = document.getElementById('dial-'+t.id);
+          if(dial) dial.innerHTML = dialSvg(t, elapsed) + '<div class="dialtext" id="digits-'+t.id+'">'+fmtTime(elapsed)+'</div>';
+          var zone = elapsed < t.timer.min*60 ? "under" : (elapsed <= t.timer.max*60 ? "target" : "over");
+          var zoneEl = document.getElementById('zone-'+t.id);
+          if(zoneEl){
+            zoneEl.className = 'zonepill '+zone;
+            zoneEl.textContent = zone==="under" ? "below target" : (zone==="target" ? "in target range" : "past target");
+          }
+          if(zone !== state._lastZone_ || true){
+            if(!t._notified) t._notified = {};
+            if(zone==="target" && !t._notified.target){ t._notified.target = true; ping(); }
+            if(zone==="over" && !t._notified.over){ t._notified.over = true; ping(); }
+          }
+        }
+      });
+    });
+    if(!anyRunning){ clearInterval(tickHandle); tickHandle = null; }
+  }, 1000);
+}
+
+function ping(){
+  try{
+    var ctx = new (window.AudioContext||window.webkitAudioContext)();
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.15, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.4);
+    o.start(); o.stop(ctx.currentTime+0.4);
+  }catch(e){}
+  if(navigator.vibrate) navigator.vibrate([120,60,120]);
+}
+
+/* ---------- EVENTS: RUN ---------- */
+
+document.getElementById('panel-run').addEventListener('click', function(e){
+  var actionEl = e.target.closest('[data-action]');
+  if(!actionEl) return;
+  var action = actionEl.getAttribute('data-action');
+  var id = actionEl.getAttribute('data-id');
+  var task = null;
+  STAGES.forEach(function(s){ s.tasks.forEach(function(t){ if(t.id===id) task = t; }); });
+
+  if(action === 'toggleopen'){
+    openTasks[id] = !openTasks[id];
+    renderRun();
+  } else if(action === 'togglecheck'){
+    e.stopPropagation();
+    state.checks[id] = !state.checks[id];
+    save(); renderRun();
+    openTasks[id] = true;
+  } else if(action === 'togglesub'){
+    e.stopPropagation();
+    var i = actionEl.getAttribute('data-i');
+    if(!state.subchecks[id]) state.subchecks[id] = {};
+    state.subchecks[id][i] = !state.subchecks[id][i];
+    save();
+    openTasks[id] = true;
+    renderRun();
+  } else if(action === 'timertoggle'){
+    e.stopPropagation();
+    if(state.timerRunning[id]){
+      state.timerElapsed[id] = taskElapsed(task);
+      state.timerRunning[id] = false;
+      state.timerStartedAt[id] = null;
+    } else {
+      state.timerRunning[id] = true;
+      state.timerStartedAt[id] = Date.now();
+      startTick();
+    }
+    save();
+    openTasks[id] = true;
+    renderRun();
+  } else if(action === 'timerreset'){
+    e.stopPropagation();
+    state.timerElapsed[id] = 0;
+    state.timerRunning[id] = false;
+    state.timerStartedAt[id] = null;
+    if(task) task._notified = {};
+    save();
+    openTasks[id] = true;
+    renderRun();
+  }
+});
+
+document.getElementById('f-employee').addEventListener('input', function(e){
+  state.employee = e.target.value; save();
+});
+document.getElementById('f-batch').addEventListener('input', function(e){
+  state.batch = e.target.value; save();
+});
+document.getElementById('newbatchbtn').addEventListener('click', function(){
+  if(!confirm('Start a new batch? This clears all checks and timers on the Run tab.')) return;
+  state.checks = {}; state.subchecks = {}; state.timerElapsed = {}; state.timerRunning = {}; state.timerStartedAt = {};
+  openTasks = {};
+  save(); renderRun();
+});
+
+/* ---------- TABS ---------- */
+
+document.querySelectorAll('.tabbtn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.tabbtn').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.getAttribute('data-tab')).classList.add('active');
+  });
+});
+
+/* ---------- RENDER: LOG ---------- */
+
+var LOG_FIELDS = [
+  {id:'date', label:'Date', type:'date'},
+  {id:'employee', label:'Employee', type:'text'},
+  {id:'batch', label:'Batch number', type:'text'},
+  {id:'flourlot', label:'Flour lot', type:'text'},
+  {id:'doughtemp', label:'Final dough temp (°C)', type:'text'},
+  {id:'mixtime', label:'Mixing time', type:'text'},
+  {id:'prooftemp', label:'Proof temp (°C)', type:'text'},
+  {id:'humidity', label:'Humidity (%)', type:'text'},
+  {id:'prooftime', label:'Proof time', type:'text'},
+  {id:'oilbefore', label:'Oil temp before frying (°C)', type:'text'},
+  {id:'oilafter', label:'Oil temp after loading (°C)', type:'text'},
+  {id:'internaltemp', label:'Internal donut temp (°C)', type:'text'}
+];
+
+function renderLog(){
+  var el = document.getElementById('panel-log');
+  var today = new Date().toISOString().slice(0,10);
+  var html = '<div class="logform"><h3>Daily production record</h3>';
+  LOG_FIELDS.forEach(function(f, i){
+    if(i % 2 === 0) html += '<div class="batchbar-row">';
+    html += '<div class="field"><label>'+f.label+'</label><input id="log-'+f.id+'" type="'+f.type+'"></div>';
+    if(i % 2 === 1 || i === LOG_FIELDS.length-1) html += '</div>';
+  });
+  html += '<div class="batchbar-row">';
+  html += '<div class="field"><label>Oil absorption</label><select id="log-absorption"><option value="">—</option><option>Low</option><option>Medium</option><option>High</option></select></div>';
+  html += '<div class="field"><label>Result</label><select id="log-result"><option value="">—</option><option>Pass</option><option>Fail</option></select></div>';
+  html += '</div>';
+  html += '<div class="field"><label>Comments</label><textarea id="log-comments" rows="2"></textarea></div>';
+  html += '<button class="logsave" id="logsavebtn">Save record</button>';
+  html += '</div>';
+  html += '<div id="logentries"></div>';
+  el.innerHTML = html;
+
+  document.getElementById('log-date').value = today;
+  document.getElementById('log-employee').value = state.employee || "";
+  document.getElementById('log-batch').value = state.batch || "";
+
+  document.getElementById('logsavebtn').addEventListener('click', function(){
+    var rec = { savedAt: Date.now() };
+    LOG_FIELDS.forEach(function(f){ rec[f.id] = document.getElementById('log-'+f.id).value; });
+    rec.absorption = document.getElementById('log-absorption').value;
+    rec.result = document.getElementById('log-result').value;
+    rec.comments = document.getElementById('log-comments').value;
+    records.unshift(rec);
+    saveRecords();
+    renderLogEntries();
+    document.getElementById('log-comments').value = "";
+    document.getElementById('log-result').value = "";
+    document.getElementById('log-absorption').value = "";
+  });
+
+  renderLogEntries();
+}
+
+function renderLogEntries(){
+  var el = document.getElementById('logentries');
+  if(!records.length){ el.innerHTML = '<div class="empty">No records saved yet.</div>'; return; }
+  var html = "";
+  records.forEach(function(rec, idx){
+    var open = !!openLogs[idx];
+    var resultClass = rec.result === 'Pass' ? 'pass' : (rec.result === 'Fail' ? 'fail' : '');
+    html += '<div class="logentry '+(open?'open':'')+'" data-idx="'+idx+'">';
+    html += '<div class="logentry-top" data-action="logopen" data-idx="'+idx+'">';
+    html += '<span>'+(rec.date||'—')+' · batch '+(rec.batch||'—')+'</span>';
+    html += '<span class="logentry-result '+resultClass+'">'+(rec.result||'—')+'</span></div>';
+    html += '<div class="logentry-detail">';
+    html += 'Employee: '+(rec.employee||'—')+'<br>Flour lot: '+(rec.flourlot||'—')+'<br>';
+    html += 'Final dough temp: '+(rec.doughtemp||'—')+' · Mixing time: '+(rec.mixtime||'—')+'<br>';
+    html += 'Proof temp: '+(rec.prooftemp||'—')+' · Humidity: '+(rec.humidity||'—')+' · Proof time: '+(rec.prooftime||'—')+'<br>';
+    html += 'Oil before: '+(rec.oilbefore||'—')+' · Oil after: '+(rec.oilafter||'—')+' · Internal temp: '+(rec.internaltemp||'—')+'<br>';
+    html += 'Oil absorption: '+(rec.absorption||'—')+'<br>';
+    if(rec.comments) html += 'Comments: '+rec.comments;
+    html += '<br><button class="logentry-del" data-action="logdel" data-idx="'+idx+'">Delete record</button>';
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+
+  el.querySelectorAll('[data-action]').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      var idx = btn.getAttribute('data-idx');
+      var action = btn.getAttribute('data-action');
+      if(action === 'logopen'){
+        openLogs[idx] = !openLogs[idx];
+        renderLogEntries();
+      } else if(action === 'logdel'){
+        e.stopPropagation();
+        if(confirm('Delete this record?')){
+          records.splice(idx,1);
+          saveRecords();
+          renderLogEntries();
+        }
+      }
+    });
+  });
+}
+
+/* ---------- RENDER: REFERENCE ---------- */
+
+function renderRef(){
+  var el = document.getElementById('panel-ref');
+  var html = '<div class="reftitle">Troubleshooting</div>';
+  TROUBLESHOOTING.forEach(function(g){
+    html += '<div class="refcard"><h3>'+g.title+'</h3><ul>'+g.items.map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>';
+  });
+  html += '<div class="reftitle">Quality check</div>';
+  html += '<div class="refcard"><ul>'+
+    ["Uniform size","Good height","Smooth surface","White ring","Even golden color","Soft crumb","No collapse","Minimal oil absorption"]
+    .map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>';
+  html += '<div class="reftitle">Equipment</div>';
+  html += '<div class="refcard"><ul>'+
+    ["Mixer","Digital scale","Probe thermometer","Timer","Fryer","Cooling racks","Piping bags","Proofer filled with water","Thermometer / hygrometer"]
+    .map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>';
+  el.innerHTML = html;
+}
+
+/* ---------- INIT ---------- */
+
+renderRef();
+load();
+
+})();
+</script>
+</body>
+</html>

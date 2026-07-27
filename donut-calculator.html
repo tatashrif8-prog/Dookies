@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Donut Order Ticket</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #2B1B1F;
+    --surface: #3A2429;
+    --surface-2: #452A30;
+    --pink: #FF6FA5;
+    --yellow: #FFC857;
+    --text: #FDF6F0;
+    --text-dim: #C9AFB5;
+    --line: #5A3B42;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 8%, rgba(255,111,165,0.10), transparent 40%),
+      radial-gradient(circle at 90% 85%, rgba(255,200,87,0.08), transparent 45%);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 22px 16px 60px;
+  }
+  .wrap{ max-width: 480px; margin: 0 auto; }
+
+  /* ---- Header ---- */
+  header{ text-align:center; margin-bottom: 22px; padding-top: 6px; }
+  .mark{
+    display:inline-flex; align-items:center; justify-content:center;
+    width: 54px; height: 54px; margin-bottom: 10px;
+  }
+  h1{
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 30px;
+    letter-spacing: 0.3px;
+    margin: 0;
+    color: var(--text);
+  }
+  h1 span{ color: var(--pink); }
+  .subtitle{
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    letter-spacing: 0.4px;
+  }
+
+  /* ---- Order input card ---- */
+  .card{
+    background: var(--surface);
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 16px;
+    border: 1px solid var(--line);
+  }
+  .card-title{
+    font-family:'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--yellow);
+    margin: 0 0 14px 0;
+  }
+  .order-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 10px 0;
+  }
+  .order-row + .order-row{ border-top: 1px dashed var(--line); }
+  .order-label{ display:flex; flex-direction:column; gap:2px; }
+  .order-label b{ font-size: 16px; font-weight:600; }
+  .order-label small{ color: var(--text-dim); font-size: 12px; }
+  .stepper{ display:flex; align-items:center; gap:0; background: var(--bg); border-radius: 12px; border:1px solid var(--line); overflow:hidden;}
+  .stepper button{
+    width: 40px; height: 40px;
+    background: transparent; border:none; color: var(--pink);
+    font-size: 20px; font-weight:700; cursor:pointer;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .stepper button:active{ background: var(--surface-2); }
+  .stepper input{
+    width: 52px; text-align:center; background:transparent; border:none; color:var(--text);
+    font-family:'IBM Plex Mono', monospace; font-size: 17px; font-weight:600;
+    -moz-appearance: textfield;
+  }
+  .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+  .stepper input:focus{ outline: 2px solid var(--pink); outline-offset: -2px; }
+
+  /* ---- Receipt ---- */
+  .ticket{
+    background: var(--surface);
+    border-radius: 18px;
+    padding: 24px 20px 18px;
+    position: relative;
+    border: 1px solid var(--line);
+  }
+  .ticket::before, .ticket::after{
+    content:""; position:absolute; left:0; right:0; height: 14px;
+    background:
+      radial-gradient(circle at 8px 0, transparent 8px, var(--bg) 8.5px) ,
+      var(--bg);
+    background-size: 16px 16px;
+    background-repeat: repeat-x;
+  }
+  .ticket::before{ top: -1px; transform: rotate(180deg); }
+  .ticket::after{ bottom: -1px; }
+
+  .ticket-head{
+    text-align:center;
+    font-family:'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .ticket-yield{
+    text-align:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--yellow);
+    margin-bottom: 16px;
+  }
+  .divider{ border:none; border-top: 1px dashed var(--line); margin: 14px 0; }
+
+  .section-label{
+    font-family:'Baloo 2', sans-serif;
+    font-weight: 700; font-size: 13px;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--pink); margin-bottom: 10px;
+  }
+  .ingredient-row{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding: 6px 0;
+    font-size: 15px;
+  }
+  .ingredient-row .name{ color: var(--text); }
+  .ingredient-row .amt{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight: 600; font-size: 15px; color: var(--text);
+    white-space: nowrap; margin-left: 12px;
+  }
+  .ingredient-row .amt small{ color: var(--text-dim); font-weight:400; font-size:12px; }
+
+  .fill-breakdown{ font-family:'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+  .total-row{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding-top: 12px; margin-top: 6px; border-top: 1px solid var(--line);
+    font-family:'Baloo 2', sans-serif; font-weight:700; font-size:16px;
+  }
+  .total-row .amt{ font-family:'IBM Plex Mono', monospace; color: var(--yellow); }
+
+  .ticket-foot{
+    text-align:center; font-size: 11px; color: var(--text-dim);
+    margin-top: 16px; letter-spacing: 0.5px;
+  }
+
+  /* ---- Settings ---- */
+  .settings-toggle{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; background:transparent; border: 1px dashed var(--line);
+    color: var(--text-dim); font-family:'Inter',sans-serif; font-size:13px;
+    padding: 12px; border-radius: 14px; margin-top: 16px; cursor:pointer;
+  }
+  .settings-toggle:active{ background: var(--surface); }
+  .settings-panel{ display:none; margin-top: 14px; }
+  .settings-panel.open{ display:block; }
+  .field-grid{ display:grid; grid-template-columns: 1fr 90px; gap: 10px 10px; align-items:center; }
+  .field-grid label{ font-size: 13px; color: var(--text-dim); }
+  .field-grid input{
+    background: var(--bg); border:1px solid var(--line); border-radius: 10px;
+    color: var(--text); font-family:'IBM Plex Mono', monospace; font-size: 14px;
+    padding: 8px 10px; text-align:right; width:100%;
+  }
+  .field-grid input:focus{ outline: 2px solid var(--pink); outline-offset:-2px; }
+  .settings-sub{ font-size:11px; color: var(--text-dim); margin: 16px 0 8px; text-transform:uppercase; letter-spacing:1px; }
+  .save-note{ text-align:center; font-size:11px; color: var(--text-dim); margin-top:14px; min-height:14px; }
+
+  @media (prefers-reduced-motion: no-preference){
+    .card, .ticket{ transition: transform 0.15s ease; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <svg class="mark" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="42" stroke="#FF6FA5" stroke-width="7"/>
+      <circle cx="50" cy="50" r="15" fill="#2B1B1F" stroke="#FFC857" stroke-width="6"/>
+    </svg>
+    <h1>Order<span>Ticket</span></h1>
+    <div class="subtitle">Donut dough &amp; filling calculator</div>
+  </header>
+
+  <div class="card">
+    <div class="card-title">Ring up the order</div>
+    <div class="order-row">
+      <div class="order-label"><b>Large</b><small id="largeSizeLabel">58g donut</small></div>
+      <div class="stepper">
+        <button onclick="step('large',-1)">−</button>
+        <input id="largeQty" type="number" inputmode="numeric" value="0" min="0" onchange="render()" oninput="render()">
+        <button onclick="step('large',1)">+</button>
+      </div>
+    </div>
+    <div class="order-row">
+      <div class="order-label"><b>Mini</b><small id="miniSizeLabel">30g donut</small></div>
+      <div class="stepper">
+        <button onclick="step('mini',-1)">−</button>
+        <input id="miniQty" type="number" inputmode="numeric" value="0" min="0" onchange="render()" oninput="render()">
+        <button onclick="step('mini',1)">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ticket">
+    <div class="ticket-head">Ingredients Needed</div>
+    <div class="ticket-yield" id="yieldLine">—</div>
+
+    <div id="ingredientList"></div>
+
+    <hr class="divider">
+    <div class="section-label">Filling</div>
+    <div id="fillingList"></div>
+
+    <div class="ticket-foot">Scaled from your base dough recipe</div>
+  </div>
+
+  <button class="settings-toggle" onclick="toggleSettings()">⚙ Adjust recipe &amp; ratios</button>
+
+  <div class="settings-panel" id="settingsPanel">
+    <div class="card">
+      <div class="card-title">Base dough recipe (g)</div>
+      <div class="field-grid" id="doughFields"></div>
+
+      <div class="settings-sub">Donut sizing (g)</div>
+      <div class="field-grid" id="sizeFields"></div>
+
+      <div class="settings-sub">Filling (g per donut)</div>
+      <div class="field-grid" id="fillingFields"></div>
+
+      <div class="settings-sub">Pastry cream / sauce ratio (%)</div>
+      <div class="field-grid" id="ratioFields"></div>
+
+      <div class="save-note" id="saveNote"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const DEFAULTS = {
+  dough: {
+    "Flour": 1000,
+    "Sugar": 110,
+    "Milk powder": 27.5,
+    "SAF Gold Instant Yeast": 13,
+    "Eggs": 200,
+    "Ice water": 220,
+    "Cold milk": 160,
+    "Bakery margarine": 120,
+    "Salt": 18,
+    "Dough improver": 10,
+    "Vanilla": 5
+  },
+  sizes: { largeDough: 58, miniDough: 30 },
+  filling: { largeFill: 45, miniFill: 25 },
+  ratio: { cream: 65, sauce: 35 }
+};
+
+let state = JSON.parse(JSON.stringify(DEFAULTS));
+
+async function loadState(){
+  try{
+    const res = await window.storage.get('donut-recipe-config', false);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      state = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), parsed);
+    }
+  }catch(e){ /* no saved config yet, use defaults */ }
+  buildSettingsFields();
+  render();
+}
+
+async function saveState(){
+  try{
+    await window.storage.set('donut-recipe-config', JSON.stringify(state), false);
+    const note = document.getElementById('saveNote');
+    note.textContent = 'Saved ✓';
+    setTimeout(()=> note.textContent = '', 1400);
+  }catch(e){
+    document.getElementById('saveNote').textContent = 'Could not save';
+  }
+}
+
+function step(which, dir){
+  const el = document.getElementById(which+'Qty');
+  let v = parseInt(el.value || '0', 10) + dir;
+  if(v < 0) v = 0;
+  el.value = v;
+  render();
+}
+
+function fmt(n){
+  if(n === 0) return '0';
+  if(Math.abs(n) < 10) return n.toFixed(1).replace(/\.0$/,'');
+  return Math.round(n).toString();
+}
+
+function render(){
+  const largeQty = parseInt(document.getElementById('largeQty').value || '0', 10);
+  const miniQty = parseInt(document.getElementById('miniQty').value || '0', 10);
+
+  document.getElementById('largeSizeLabel').textContent = state.sizes.largeDough + 'g donut';
+  document.getElementById('miniSizeLabel').textContent = state.sizes.miniDough + 'g donut';
+
+  const baseDoughTotal = Object.values(state.dough).reduce((a,b)=>a+Number(b||0),0);
+  const orderedDoughWeight = largeQty*state.sizes.largeDough + miniQty*state.sizes.miniDough;
+  const scale = baseDoughTotal > 0 ? orderedDoughWeight / baseDoughTotal : 0;
+
+  const yieldLine = document.getElementById('yieldLine');
+  if(orderedDoughWeight === 0){
+    yieldLine.textContent = 'Enter an order above';
+  } else {
+    yieldLine.textContent = `${largeQty} large + ${miniQty} mini  ·  ${fmt(orderedDoughWeight)}g dough  ·  ${scale.toFixed(2)}× base batch`;
+  }
+
+  const list = document.getElementById('ingredientList');
+  list.innerHTML = '';
+  Object.entries(state.dough).forEach(([name, amt])=>{
+    const scaled = Number(amt) * scale;
+    const row = document.createElement('div');
+    row.className = 'ingredient-row';
+    row.innerHTML = `<span class="name">${name}</span><span class="amt">${fmt(scaled)} <small>g</small></span>`;
+    list.appendChild(row);
+  });
+  const totalRow = document.createElement('div');
+  totalRow.className = 'total-row';
+  totalRow.innerHTML = `<span>Total dough</span><span class="amt">${fmt(baseDoughTotal*scale)} g</span>`;
+  list.appendChild(totalRow);
+
+  const creamPct = Number(state.ratio.cream)/100;
+  const saucePct = Number(state.ratio.sauce)/100;
+  const largeFillTotal = largeQty * state.filling.largeFill;
+  const miniFillTotal = miniQty * state.filling.miniFill;
+  const totalFill = largeFillTotal + miniFillTotal;
+  const totalCream = totalFill * creamPct;
+  const totalSauce = totalFill * saucePct;
+
+  const fList = document.getElementById('fillingList');
+  fList.innerHTML = '';
+
+  const rowCream = document.createElement('div');
+  rowCream.className = 'ingredient-row';
+  rowCream.innerHTML = `<span class="name">Pastry cream</span><span class="amt">${fmt(totalCream)} <small>g</small></span>`;
+  fList.appendChild(rowCream);
+
+  const rowSauce = document.createElement('div');
+  rowSauce.className = 'ingredient-row';
+  rowSauce.innerHTML = `<span class="name">Sauce</span><span class="amt">${fmt(totalSauce)} <small>g</small></span>`;
+  fList.appendChild(rowSauce);
+
+  const breakdown = document.createElement('div');
+  breakdown.className = 'fill-breakdown';
+  breakdown.textContent = `Large: ${fmt(largeQty*state.filling.largeFill*creamPct)}g cream + ${fmt(largeQty*state.filling.largeFill*saucePct)}g sauce   ·   Mini: ${fmt(miniQty*state.filling.miniFill*creamPct)}g cream + ${fmt(miniQty*state.filling.miniFill*saucePct)}g sauce`;
+  fList.appendChild(breakdown);
+
+  const totalFillRow = document.createElement('div');
+  totalFillRow.className = 'total-row';
+  totalFillRow.innerHTML = `<span>Total filling</span><span class="amt">${fmt(totalFill)} g</span>`;
+  fList.appendChild(totalFillRow);
+}
+
+function toggleSettings(){
+  document.getElementById('settingsPanel').classList.toggle('open');
+}
+
+function buildSettingsFields(){
+  const doughDiv = document.getElementById('doughFields');
+  doughDiv.innerHTML = '';
+  Object.entries(state.dough).forEach(([name, val])=>{
+    doughDiv.innerHTML += `<label>${name}</label><input type="number" step="0.5" value="${val}" data-group="dough" data-key="${name}">`;
+  });
+
+  document.getElementById('sizeFields').innerHTML = `
+    <label>Large donut (g)</label><input type="number" step="1" value="${state.sizes.largeDough}" data-group="sizes" data-key="largeDough">
+    <label>Mini donut (g)</label><input type="number" step="1" value="${state.sizes.miniDough}" data-group="sizes" data-key="miniDough">
+  `;
+
+  document.getElementById('fillingFields').innerHTML = `
+    <label>Large filling (g)</label><input type="number" step="1" value="${state.filling.largeFill}" data-group="filling" data-key="largeFill">
+    <label>Mini filling (g)</label><input type="number" step="1" value="${state.filling.miniFill}" data-group="filling" data-key="miniFill">
+  `;
+
+  document.getElementById('ratioFields').innerHTML = `
+    <label>Pastry cream %</label><input type="number" step="1" value="${state.ratio.cream}" data-group="ratio" data-key="cream">
+    <label>Sauce %</label><input type="number" step="1" value="${state.ratio.sauce}" data-group="ratio" data-key="sauce">
+  `;
+
+  document.querySelectorAll('.settings-panel input').forEach(inp=>{
+    inp.addEventListener('change', (e)=>{
+      const group = e.target.dataset.group;
+      const key = e.target.dataset.key;
+      let v = parseFloat(e.target.value);
+      if(isNaN(v)) v = 0;
+      state[group][key] = v;
+      saveState();
+      render();
+    });
+  });
+}
+
+loadState();
+</script>
+</body>
+</html>

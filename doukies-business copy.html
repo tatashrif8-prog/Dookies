@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Doukies — Orders, Money &amp; Inventory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1b1613; --surface:#241e18; --surface-raised:#2c241d;
+    --border:#3c332a; --amber:#e3a73e; --amber-dim:#8a6a2e;
+    --cinnamon:#c1552e; --sage:#93a86a;
+    --text-primary:#f6eee1; --text-secondary:#b7a892; --text-muted:#8a7d69;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--bg);color:var(--text-primary);font-family:'Inter',sans-serif;-webkit-tap-highlight-color:transparent;}
+  body{padding-bottom:76px;}
+  h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;margin:0;}
+  .wrap{max-width:540px;margin:0 auto;padding:16px 16px 8px;}
+  .brand{margin-bottom:14px;}
+  .brand h1{font-size:22px;}
+  .brand .tag{font-size:11px;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;letter-spacing:0.5px;text-transform:uppercase;}
+  .subpills{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+  .subpill{font-family:'Inter',sans-serif;font-size:12.5px;font-weight:500;padding:7px 13px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--text-secondary);cursor:pointer;}
+  .subpill.active{background:var(--amber);color:#1b1613;border-color:var(--amber);}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .sub{display:none;}
+  .sub.active{display:block;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:12px;}
+  .card h3{font-size:14px;margin-bottom:10px;}
+  .field{display:flex;flex-direction:column;gap:4px;margin-bottom:9px;}
+  .field label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;}
+  .row2{display:flex;gap:8px;}
+  .row2 .field{flex:1;}
+  input,select,textarea{background:var(--surface-raised);border:1px solid var(--border);color:var(--text-primary);border-radius:8px;padding:8px 9px;font-size:14px;font-family:'Inter',sans-serif;width:100%;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--amber-dim);}
+  .btn{font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:8px 14px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text-primary);cursor:pointer;}
+  .btn.primary{background:var(--amber);color:#1b1613;border-color:var(--amber);font-weight:600;}
+  .btn.full{width:100%;}
+  .btn:active{transform:scale(0.98);}
+  .btn.danger{color:var(--cinnamon);}
+  .lineadd{display:flex;gap:6px;align-items:flex-end;margin-bottom:8px;}
+  .lineadd select{flex:2;}
+  .lineadd input{flex:1;}
+  .linelist{margin:8px 0;}
+  .lineitem{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border-soft, #332b23);}
+  .lineitem:last-child{border-bottom:none;}
+  .lineitem .rm{color:var(--cinnamon);font-size:12px;cursor:pointer;background:none;border:none;}
+  .totalrow{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;padding-top:8px;border-top:1px solid var(--border);margin-top:6px;}
+  .ordercard{background:var(--surface);border:1px solid var(--border);border-radius:13px;margin-bottom:9px;overflow:hidden;}
+  .orderhead{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;}
+  .orderinfo{flex:1;}
+  .ordername{font-size:14px;font-weight:500;}
+  .ordermeta{font-size:11px;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;margin-top:2px;}
+  .orderprice{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--amber);white-space:nowrap;}
+  .badge{font-size:10px;font-family:'IBM Plex Mono',monospace;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+  .badge.pending{background:rgba(227,167,62,0.15);color:var(--amber);border:1px solid rgba(227,167,62,0.4);}
+  .badge.filled{background:rgba(147,168,106,0.15);color:var(--sage);border:1px solid rgba(147,168,106,0.4);}
+  .badge.unpaid{background:rgba(193,85,46,0.15);color:var(--cinnamon);border:1px solid rgba(193,85,46,0.4);}
+  .badge.paid{background:rgba(147,168,106,0.15);color:var(--sage);border:1px solid rgba(147,168,106,0.4);}
+  .orderbody{display:none;padding:0 14px 14px;}
+  .ordercard.open .orderbody{display:block;}
+  .orderline{display:flex;align-items:center;gap:9px;padding:6px 0;font-size:13.5px;}
+  .checkbox{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;background:var(--surface-raised);cursor:pointer;}
+  .checkbox.checked{background:var(--sage);border-color:var(--sage);color:#1b1613;}
+  .orderline .lbl.done{text-decoration:line-through;color:var(--text-muted);}
+  .orderflags{display:flex;gap:14px;margin:10px 0;font-size:12.5px;}
+  .flagtoggle{display:flex;align-items:center;gap:7px;cursor:pointer;color:var(--text-secondary);}
+  .ordernotes{font-size:12.5px;color:var(--text-secondary);margin-top:6px;font-style:italic;}
+  .del{font-size:11px;color:var(--text-muted);background:none;border:none;text-decoration:underline;cursor:pointer;margin-top:10px;}
+  .makelist-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:14px;}
+  .makelist-row:last-child{border-bottom:none;}
+  .makelist-qty{font-family:'IBM Plex Mono',monospace;color:var(--amber);font-weight:600;}
+  .menurow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);}
+  .menurow:last-child{border-bottom:none;}
+  .menurow input{flex:1;}
+  .menurow input.price{flex:0 0 80px;}
+  .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .statcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
+  .statcard.wide{grid-column:1/-1;}
+  .statlabel{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;font-family:'IBM Plex Mono',monospace;}
+  .statval{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;}
+  .statval.amber{color:var(--amber);}
+  .statval.sage{color:var(--sage);}
+  .statval.cinnamon{color:var(--cinnamon);}
+  table.money{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.money th{text-align:left;color:var(--text-muted);font-weight:500;font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;padding:6px 4px;border-bottom:1px solid var(--border);}
+  table.money td{padding:7px 4px;border-bottom:1px solid var(--border);font-family:'IBM Plex Mono',monospace;}
+  .listrow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+  .listrow:last-child{border-bottom:none;}
+  .listrow-main{flex:1;}
+  .listrow-title{font-size:13.5px;}
+  .listrow-sub{font-size:11px;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;margin-top:2px;}
+  .listrow-amt{font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;margin-right:10px;}
+  .stockrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);}
+  .stockrow:last-child{border-bottom:none;}
+  .stockrow.low{background:rgba(193,85,46,0.06);margin:0 -16px;padding:11px 16px;}
+  .stockname{flex:1;}
+  .stockname .n{font-size:14px;}
+  .stockname .u{font-size:11px;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;}
+  .stepper{display:flex;align-items:center;gap:8px;}
+  .stepbtn{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface-raised);color:var(--text-primary);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .stepbtn:active{transform:scale(0.94);}
+  .stockqty{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;min-width:42px;text-align:center;}
+  .stockqty.low{color:var(--cinnamon);}
+  .empty{color:var(--text-muted);font-size:13px;text-align:center;padding:24px 10px;}
+  .tabbar{position:fixed;bottom:0;left:0;right:0;background:#1f1a15;border-top:1px solid var(--border);display:flex;z-index:50;}
+  .tabbtn{flex:1;background:none;border:none;color:var(--text-muted);font-family:'Inter',sans-serif;font-size:12px;padding:11px 0 9px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .tabbtn.active{color:var(--amber);}
+  .tabdot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:0;}
+  .tabbtn.active .tabdot{opacity:1;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><h1>Doukies</h1><div class="tag">Orders · money · inventory</div></div>
+
+  <div class="panel active" id="panel-orders">
+    <div class="subpills">
+      <button class="subpill active" data-panel="orders" data-sub="new">New order</button>
+      <button class="subpill" data-panel="orders" data-sub="list">Orders</button>
+      <button class="subpill" data-panel="orders" data-sub="make">To make</button>
+      <button class="subpill" data-panel="orders" data-sub="menu">Menu</button>
+    </div>
+
+    <div class="sub active" id="orders-new">
+      <div class="card">
+        <h3>New order</h3>
+        <div class="row2">
+          <div class="field"><label>Customer</label><input id="o-customer" type="text" placeholder="Name"></div>
+          <div class="field"><label>Channel</label><select id="o-channel"><option>Website</option><option>Instagram</option><option>WhatsApp</option><option>Other</option></select></div>
+        </div>
+        <div class="field"><label>Date</label><input id="o-date" type="date"></div>
+        <div class="field"><label>Add item</label>
+          <div class="lineadd">
+            <select id="o-item"></select>
+            <input id="o-qty" type="number" min="1" value="1">
+            <button class="btn" id="o-addline">Add</button>
+          </div>
+        </div>
+        <div class="linelist" id="o-lines"></div>
+        <div class="totalrow"><span>Total</span><span id="o-total">0</span></div>
+        <div class="field" style="margin-top:9px;"><label>Notes</label><textarea id="o-notes" rows="2"></textarea></div>
+        <button class="btn primary full" id="o-save" style="margin-top:8px;">Save order</button>
+      </div>
+    </div>
+
+    <div class="sub" id="orders-list"></div>
+    <div class="sub" id="orders-make"></div>
+    <div class="sub" id="orders-menu"></div>
+  </div>
+
+  <div class="panel" id="panel-money">
+    <div class="subpills">
+      <button class="subpill active" data-panel="money" data-sub="overview">Overview</button>
+      <button class="subpill" data-panel="money" data-sub="expenses">Expenses</button>
+      <button class="subpill" data-panel="money" data-sub="withdrawals">Withdrawals</button>
+      <button class="subpill" data-panel="money" data-sub="owners">Owners</button>
+    </div>
+    <div class="sub active" id="money-overview"></div>
+    <div class="sub" id="money-expenses"></div>
+    <div class="sub" id="money-withdrawals"></div>
+    <div class="sub" id="money-owners"></div>
+  </div>
+
+  <div class="panel" id="panel-inventory">
+    <div class="card">
+      <h3>Add inventory item</h3>
+      <div class="row2">
+        <div class="field"><label>Name</label><input id="i-name" type="text" placeholder="e.g. Flour"></div>
+        <div class="field"><label>Unit</label><input id="i-unit" type="text" placeholder="kg / g / pcs"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Starting quantity</label><input id="i-qty" type="number" step="any" value="0"></div>
+        <div class="field"><label>Low-stock alert below</label><input id="i-threshold" type="number" step="any" placeholder="optional"></div>
+      </div>
+      <button class="btn primary full" id="i-save">Add item</button>
+    </div>
+    <div class="card" id="inv-list"></div>
+  </div>
+</div>
+
+<div class="tabbar">
+  <button class="tabbtn active" data-tab="orders"><span>Orders</span><span class="tabdot"></span></button>
+  <button class="tabbtn" data-tab="money"><span>Money</span><span class="tabdot"></span></button>
+  <button class="tabbtn" data-tab="inventory"><span>Inventory</span><span class="tabdot"></span></button>
+</div>
+
+<script>
+(function(){
+
+/* ---------- STATE ---------- */
+var menu = [];
+var orders = [];
+var inventory = [];
+var expenses = [];
+var withdrawals = [];
+var owners = { a: "Owner A", b: "Owner B" };
+var draftLines = [];
+var openOrders = {};
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function money(n){ n = Number(n)||0; return n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+function saveAll(){
+  try{
+    localStorage.setItem('doukies-biz-menu', JSON.stringify(menu));
+    localStorage.setItem('doukies-biz-orders', JSON.stringify(orders));
+    localStorage.setItem('doukies-biz-inventory', JSON.stringify(inventory));
+    localStorage.setItem('doukies-biz-expenses', JSON.stringify(expenses));
+    localStorage.setItem('doukies-biz-withdrawals', JSON.stringify(withdrawals));
+    localStorage.setItem('doukies-biz-owners', JSON.stringify(owners));
+  }catch(e){}
+}
+function getKey(key){
+  try{
+    var raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+function loadAll(){
+  var m = getKey('doukies-biz-menu'); if(m) menu = m;
+  var o = getKey('doukies-biz-orders'); if(o) orders = o;
+  var inv = getKey('doukies-biz-inventory'); if(inv) inventory = inv;
+  var ex = getKey('doukies-biz-expenses'); if(ex) expenses = ex;
+  var wd = getKey('doukies-biz-withdrawals'); if(wd) withdrawals = wd;
+  var ow = getKey('doukies-biz-owners'); if(ow) owners = ow;
+  document.getElementById('o-date').value = todayStr();
+  renderMenuSelect();
+  renderOrdersList();
+  renderMakeList();
+  renderMenuTab();
+  renderMoneyOverview();
+  renderExpenses();
+  renderWithdrawals();
+  renderOwners();
+  renderInventory();
+}
+
+/* ---------- TAB / SUBPILL NAV ---------- */
+document.querySelectorAll('.tabbtn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.tabbtn').forEach(function(b){b.classList.remove('active');});
+    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.getAttribute('data-tab')).classList.add('active');
+  });
+});
+document.querySelectorAll('.subpill').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var panel = btn.getAttribute('data-panel'), sub = btn.getAttribute('data-sub');
+    document.querySelectorAll('.subpill[data-panel="'+panel+'"]').forEach(function(b){b.classList.remove('active');});
+    document.querySelectorAll('#panel-'+panel+' .sub').forEach(function(p){p.classList.remove('active');});
+    btn.classList.add('active');
+    document.getElementById(panel+'-'+sub).classList.add('active');
+  });
+});
+
+/* ---------- MENU (product catalog) ---------- */
+function renderMenuSelect(){
+  var sel = document.getElementById('o-item');
+  sel.innerHTML = menu.map(function(m){ return '<option value="'+m.id+'">'+m.name+' — '+money(m.price)+'</option>'; }).join('');
+}
+
+function renderMenuTab(){
+  var el = document.getElementById('orders-menu');
+  var html = '<div class="card"><h3>Add menu item</h3>';
+  html += '<div class="row2"><div class="field"><label>Name</label><input id="m-name" type="text"></div><div class="field"><label>Price</label><input id="m-price" type="number" step="any"></div></div>';
+  html += '<button class="btn primary full" id="m-add">Add item</button></div>';
+  html += '<div class="card"><h3>Menu</h3><div id="m-list">';
+  if(!menu.length) html += '<div class="empty">No items yet.</div>';
+  menu.forEach(function(m){
+    html += '<div class="menurow"><input value="'+m.name.replace(/"/g,'&quot;')+'" data-action="mname" data-id="'+m.id+'">';
+    html += '<input class="price" type="number" step="any" value="'+m.price+'" data-action="mprice" data-id="'+m.id+'">';
+    html += '<button class="btn danger" data-action="mdel" data-id="'+m.id+'">Del</button></div>';
+  });
+  html += '</div></div>';
+  el.innerHTML = html;
+
+  document.getElementById('m-add').addEventListener('click', function(){
+    var name = document.getElementById('m-name').value.trim();
+    var price = parseFloat(document.getElementById('m-price').value);
+    if(!name || isNaN(price)) return;
+    menu.push({id:uid(), name:name, price:price});
+    saveAll(); renderMenuSelect(); renderMenuTab();
+  });
+  el.querySelectorAll('[data-action]').forEach(function(input){
+    input.addEventListener('change', function(){
+      var id = input.getAttribute('data-id'), action = input.getAttribute('data-action');
+      var item = menu.find(function(m){return m.id===id;});
+      if(!item) return;
+      if(action==='mname') item.name = input.value;
+      if(action==='mprice') item.price = parseFloat(input.value)||0;
+      if(action==='mdel'){ menu = menu.filter(function(m){return m.id!==id;}); renderMenuTab(); }
+      saveAll(); renderMenuSelect();
+    });
+  });
+}
+
+/* ---------- ORDER ENTRY ---------- */
+function renderDraftLines(){
+  var el = document.getElementById('o-lines');
+  var total = 0;
+  el.innerHTML = draftLines.map(function(l, i){
+    total += l.price * l.qty;
+    return '<div class="lineitem"><span>'+l.qty+' × '+l.name+'</span><span>'+money(l.price*l.qty)+' <button class="rm" data-i="'+i+'">remove</button></span></div>';
+  }).join('');
+  document.getElementById('o-total').textContent = money(total);
+  el.querySelectorAll('.rm').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      draftLines.splice(parseInt(btn.getAttribute('data-i')),1);
+      renderDraftLines();
+    });
+  });
+}
+
+document.getElementById('o-addline').addEventListener('click', function(){
+  var itemId = document.getElementById('o-item').value;
+  var qty = parseFloat(document.getElementById('o-qty').value) || 1;
+  var item = menu.find(function(m){return m.id===itemId;});
+  if(!item) return;
+  draftLines.push({itemId:item.id, name:item.name, price:item.price, qty:qty, filled:false});
+  renderDraftLines();
+});
+
+document.getElementById('o-save').addEventListener('click', function(){
+  if(!draftLines.length){ alert('Add at least one item.'); return; }
+  var order = {
+    id: uid(),
+    customer: document.getElementById('o-customer').value.trim() || 'Unnamed',
+    channel: document.getElementById('o-channel').value,
+    date: document.getElementById('o-date').value || todayStr(),
+    notes: document.getElementById('o-notes').value.trim(),
+    lines: draftLines,
+    paid: false
+  };
+  orders.unshift(order);
+  draftLines = [];
+  document.getElementById('o-customer').value = '';
+  document.getElementById('o-notes').value = '';
+  renderDraftLines();
+  saveAll();
+  renderOrdersList(); renderMakeList(); renderMoneyOverview();
+});
+
+/* ---------- ORDERS LIST ---------- */
+function orderTotal(o){ return o.lines.reduce(function(s,l){ return s + l.price*l.qty; }, 0); }
+function orderFilled(o){ return o.lines.every(function(l){ return l.filled; }); }
+
+function renderOrdersList(){
+  var el = document.getElementById('orders-list');
+  if(!orders.length){ el.innerHTML = '<div class="empty">No orders yet.</div>'; return; }
+  var html = '';
+  orders.forEach(function(o){
+    var filled = orderFilled(o);
+    var open = !!openOrders[o.id];
+    html += '<div class="ordercard '+(open?'open':'')+'" data-id="'+o.id+'">';
+    html += '<div class="orderhead" data-action="open" data-id="'+o.id+'">';
+    html += '<div class="orderinfo"><div class="ordername">'+o.customer+'</div><div class="ordermeta">'+o.channel+' · '+o.date+'</div></div>';
+    html += '<span class="badge '+(filled?'filled':'pending')+'">'+(filled?'Filled':'Pending')+'</span>';
+    html += '<span class="orderprice">'+money(orderTotal(o))+'</span></div>';
+    html += '<div class="orderbody">';
+    o.lines.forEach(function(l, i){
+      html += '<div class="orderline"><div class="checkbox '+(l.filled?'checked':'')+'" data-action="lfill" data-id="'+o.id+'" data-i="'+i+'">'+(l.filled?'✓':'')+'</div>';
+      html += '<span class="lbl '+(l.filled?'done':'')+'">'+l.qty+' × '+l.name+' — '+money(l.price*l.qty)+'</span></div>';
+    });
+    html += '<div class="orderflags">';
+    html += '<div class="flagtoggle" data-action="paid" data-id="'+o.id+'"><span class="checkbox '+(o.paid?'checked':'')+'">'+(o.paid?'✓':'')+'</span> Payment received</div>';
+    html += '</div>';
+    if(o.notes) html += '<div class="ordernotes">'+o.notes+'</div>';
+    html += '<button class="del" data-action="odel" data-id="'+o.id+'">Delete order</button>';
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+
+  el.querySelectorAll('[data-action]').forEach(function(node){
+    node.addEventListener('click', function(e){
+      var action = node.getAttribute('data-action');
+      var id = node.getAttribute('data-id');
+      var order = orders.find(function(o){return o.id===id;});
+      if(action==='open'){ openOrders[id] = !openOrders[id]; renderOrdersList(); }
+      else if(action==='lfill'){
+        e.stopPropagation();
+        var i = parseInt(node.getAttribute('data-i'));
+        order.lines[i].filled = !order.lines[i].filled;
+        saveAll(); openOrders[id]=true; renderOrdersList(); renderMakeList();
+      } else if(action==='paid'){
+        e.stopPropagation();
+        order.paid = !order.paid;
+        saveAll(); openOrders[id]=true; renderOrdersList(); renderMoneyOverview();
+      } else if(action==='odel'){
+        e.stopPropagation();
+        if(confirm('Delete this order?')){
+          orders = orders.filter(function(o){return o.id!==id;});
+          saveAll(); renderOrdersList(); renderMakeList(); renderMoneyOverview();
+        }
+      }
+    });
+  });
+}
+
+/* ---------- TO MAKE (aggregated pending items) ---------- */
+function renderMakeList(){
+  var el = document.getElementById('orders-make');
+  var totals = {};
+  orders.forEach(function(o){
+    o.lines.forEach(function(l){
+      if(!l.filled){ totals[l.name] = (totals[l.name]||0) + l.qty; }
+    });
+  });
+  var names = Object.keys(totals).sort();
+  var html = '<div class="card"><h3>Still to make</h3>';
+  if(!names.length) html += '<div class="empty">Nothing pending — all orders filled.</div>';
+  names.forEach(function(n){
+    html += '<div class="makelist-row"><span>'+n+'</span><span class="makelist-qty">'+totals[n]+'</span></div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+/* ---------- MONEY: OVERVIEW ---------- */
+function monthKey(dateStr){ return (dateStr||todayStr()).slice(0,7); }
+
+function renderMoneyOverview(){
+  var el = document.getElementById('money-overview');
+  var raised = orders.filter(function(o){return o.paid;}).reduce(function(s,o){return s+orderTotal(o);},0);
+  var expTotal = expenses.reduce(function(s,e){return s+Number(e.amount||0);},0);
+  var wA = withdrawals.filter(function(w){return w.owner==='a';}).reduce(function(s,w){return s+Number(w.amount||0);},0);
+  var wB = withdrawals.filter(function(w){return w.owner==='b';}).reduce(function(s,w){return s+Number(w.amount||0);},0);
+  var pool = raised - expTotal - wA - wB;
+
+  var html = '<div class="statgrid">';
+  html += '<div class="statcard wide"><div class="statlabel">Joint pool balance</div><div class="statval amber">'+money(pool)+'</div></div>';
+  html += '<div class="statcard"><div class="statlabel">Raised (paid orders)</div><div class="statval sage">'+money(raised)+'</div></div>';
+  html += '<div class="statcard"><div class="statlabel">Expenses</div><div class="statval cinnamon">'+money(expTotal)+'</div></div>';
+  html += '<div class="statcard"><div class="statlabel">'+owners.a+' took</div><div class="statval">'+money(wA)+'</div></div>';
+  html += '<div class="statcard"><div class="statlabel">'+owners.b+' took</div><div class="statval">'+money(wB)+'</div></div>';
+  html += '</div>';
+
+  var months = {};
+  orders.filter(function(o){return o.paid;}).forEach(function(o){
+    var k = monthKey(o.date); months[k] = months[k] || {raised:0,exp:0,a:0,b:0};
+    months[k].raised += orderTotal(o);
+  });
+  expenses.forEach(function(e){
+    var k = monthKey(e.date); months[k] = months[k] || {raised:0,exp:0,a:0,b:0};
+    months[k].exp += Number(e.amount||0);
+  });
+  withdrawals.forEach(function(w){
+    var k = monthKey(w.date); months[k] = months[k] || {raised:0,exp:0,a:0,b:0};
+    months[k][w.owner] += Number(w.amount||0);
+  });
+  var keys = Object.keys(months).sort().reverse();
+  html += '<div class="card"><h3>By month</h3>';
+  if(!keys.length){ html += '<div class="empty">No activity yet.</div>'; }
+  else{
+    html += '<table class="money"><tr><th>Month</th><th>Raised</th><th>Expenses</th><th>'+owners.a+'</th><th>'+owners.b+'</th><th>Net</th></tr>';
+    keys.forEach(function(k){
+      var m = months[k];
+      var net = m.raised - m.exp - m.a - m.b;
+      html += '<tr><td>'+k+'</td><td>'+money(m.raised)+'</td><td>'+money(m.exp)+'</td><td>'+money(m.a)+'</td><td>'+money(m.b)+'</td><td>'+money(net)+'</td></tr>';
+    });
+    html += '</table>';
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+/* ---------- MONEY: EXPENSES ---------- */
+function renderExpenses(){
+  var el = document.getElementById('money-expenses');
+  var html = '<div class="card"><h3>Add expense</h3>';
+  html += '<div class="row2"><div class="field"><label>Date</label><input id="e-date" type="date" value="'+todayStr()+'"></div><div class="field"><label>Amount</label><input id="e-amount" type="number" step="any"></div></div>';
+  html += '<div class="row2"><div class="field"><label>Description</label><input id="e-desc" type="text"></div><div class="field"><label>Category</label><input id="e-cat" type="text" placeholder="ingredients / packaging / rent…"></div></div>';
+  html += '<button class="btn primary full" id="e-save">Save expense</button></div>';
+  html += '<div class="card"><h3>Expenses</h3><div id="e-list">';
+  if(!expenses.length) html += '<div class="empty">No expenses logged.</div>';
+  expenses.forEach(function(e){
+    html += '<div class="listrow"><div class="listrow-main"><div class="listrow-title">'+e.desc+'</div><div class="listrow-sub">'+e.date+' · '+(e.category||'—')+'</div></div>';
+    html += '<span class="listrow-amt">'+money(e.amount)+'</span><button class="del" data-id="'+e.id+'">Del</button></div>';
+  });
+  html += '</div></div>';
+  el.innerHTML = html;
+
+  document.getElementById('e-save').addEventListener('click', function(){
+    var amount = parseFloat(document.getElementById('e-amount').value);
+    var desc = document.getElementById('e-desc').value.trim();
+    if(!desc || isNaN(amount)) return;
+    expenses.unshift({id:uid(), date:document.getElementById('e-date').value||todayStr(), desc:desc, category:document.getElementById('e-cat').value.trim(), amount:amount});
+    saveAll(); renderExpenses(); renderMoneyOverview();
+  });
+  el.querySelectorAll('#e-list .del').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      expenses = expenses.filter(function(e){return e.id!==btn.getAttribute('data-id');});
+      saveAll(); renderExpenses(); renderMoneyOverview();
+    });
+  });
+}
+
+/* ---------- MONEY: WITHDRAWALS ---------- */
+function renderWithdrawals(){
+  var el = document.getElementById('money-withdrawals');
+  var html = '<div class="card"><h3>Log a withdrawal</h3>';
+  html += '<div class="row2"><div class="field"><label>Owner</label><select id="w-owner"><option value="a">'+owners.a+'</option><option value="b">'+owners.b+'</option></select></div><div class="field"><label>Amount</label><input id="w-amount" type="number" step="any"></div></div>';
+  html += '<div class="row2"><div class="field"><label>Date</label><input id="w-date" type="date" value="'+todayStr()+'"></div><div class="field"><label>Note</label><input id="w-note" type="text" placeholder="what for"></div></div>';
+  html += '<button class="btn primary full" id="w-save">Save withdrawal</button></div>';
+  html += '<div class="card"><h3>History</h3><div id="w-list">';
+  if(!withdrawals.length) html += '<div class="empty">No withdrawals logged.</div>';
+  withdrawals.forEach(function(w){
+    html += '<div class="listrow"><div class="listrow-main"><div class="listrow-title">'+(w.owner==='a'?owners.a:owners.b)+'</div><div class="listrow-sub">'+w.date+(w.note?' · '+w.note:'')+'</div></div>';
+    html += '<span class="listrow-amt">'+money(w.amount)+'</span><button class="del" data-id="'+w.id+'">Del</button></div>';
+  });
+  html += '</div></div>';
+  el.innerHTML = html;
+
+  document.getElementById('w-save').addEventListener('click', function(){
+    var amount = parseFloat(document.getElementById('w-amount').value);
+    if(isNaN(amount)) return;
+    withdrawals.unshift({id:uid(), owner:document.getElementById('w-owner').value, date:document.getElementById('w-date').value||todayStr(), note:document.getElementById('w-note').value.trim(), amount:amount});
+    saveAll(); renderWithdrawals(); renderMoneyOverview();
+  });
+  el.querySelectorAll('#w-list .del').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      withdrawals = withdrawals.filter(function(w){return w.id!==btn.getAttribute('data-id');});
+      saveAll(); renderWithdrawals(); renderMoneyOverview();
+    });
+  });
+}
+
+/* ---------- MONEY: OWNERS ---------- */
+function renderOwners(){
+  var el = document.getElementById('money-owners');
+  var html = '<div class="card"><h3>Owner names</h3>';
+  html += '<div class="field"><label>Owner A</label><input id="own-a" value="'+owners.a.replace(/"/g,'&quot;')+'"></div>';
+  html += '<div class="field"><label>Owner B</label><input id="own-b" value="'+owners.b.replace(/"/g,'&quot;')+'"></div>';
+  html += '<button class="btn primary full" id="own-save">Save names</button></div>';
+  el.innerHTML = html;
+  document.getElementById('own-save').addEventListener('click', function(){
+    owners.a = document.getElementById('own-a').value.trim() || 'Owner A';
+    owners.b = document.getElementById('own-b').value.trim() || 'Owner B';
+    saveAll(); renderOwners(); renderMoneyOverview(); renderWithdrawals();
+  });
+}
+
+/* ---------- INVENTORY ---------- */
+function renderInventory(){
+  var el = document.getElementById('inv-list');
+  if(!inventory.length){ el.innerHTML = '<h3>Stock</h3><div class="empty">No items yet.</div>'; return; }
+  var html = '<h3>Stock</h3>';
+  inventory.forEach(function(it){
+    var low = it.threshold !== '' && it.threshold !== null && it.threshold !== undefined && Number(it.qty) <= Number(it.threshold);
+    html += '<div class="stockrow '+(low?'low':'')+'">';
+    html += '<div class="stockname"><div class="n">'+it.name+'</div><div class="u">'+(it.unit||'')+(it.threshold!==''&&it.threshold!==null&&it.threshold!==undefined?' · alert below '+it.threshold:'')+'</div></div>';
+    html += '<div class="stepper"><button class="stepbtn" data-action="dec" data-id="'+it.id+'">−</button>';
+    html += '<span class="stockqty '+(low?'low':'')+'">'+it.qty+'</span>';
+    html += '<button class="stepbtn" data-action="inc" data-id="'+it.id+'">+</button></div>';
+    html += '<button class="del" data-action="idel" data-id="'+it.id+'">Del</button>';
+    html += '</div>';
+  });
+  el.innerHTML = html;
+
+  el.querySelectorAll('[data-action]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var id = btn.getAttribute('data-id'), action = btn.getAttribute('data-action');
+      var item = inventory.find(function(i){return i.id===id;});
+      if(!item) return;
+      if(action==='inc') item.qty = Number(item.qty) + 1;
+      if(action==='dec') item.qty = Number(item.qty) - 1;
+      if(action==='idel') inventory = inventory.filter(function(i){return i.id!==id;});
+      saveAll(); renderInventory();
+    });
+  });
+}
+
+document.getElementById('i-save').addEventListener('click', function(){
+  var name = document.getElementById('i-name').value.trim();
+  if(!name) return;
+  inventory.push({
+    id: uid(), name: name,
+    unit: document.getElementById('i-unit').value.trim(),
+    qty: parseFloat(document.getElementById('i-qty').value)||0,
+    threshold: document.getElementById('i-threshold').value === '' ? null : parseFloat(document.getElementById('i-threshold').value)
+  });
+  document.getElementById('i-name').value=''; document.getElementById('i-unit').value='';
+  document.getElementById('i-qty').value='0'; document.getElementById('i-threshold').value='';
+  saveAll(); renderInventory();
+});
+
+loadAll();
+})();
+</script>
+</body>
+</html>

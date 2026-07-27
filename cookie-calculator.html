@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Doukies Order Ticket</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #241A14;
+    --surface: #32241C;
+    --surface-2: #3D2B21;
+    --amber: #E8A33D;
+    --choc: #7A4A2E;
+    --cream: #FDF6F0;
+    --text: #FDF6F0;
+    --text-dim: #C9AFA0;
+    --line: #55402F;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 12% 6%, rgba(232,163,61,0.10), transparent 40%),
+      radial-gradient(circle at 92% 90%, rgba(122,74,46,0.18), transparent 45%);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 22px 16px 60px;
+  }
+  .wrap{ max-width: 480px; margin: 0 auto; }
+
+  header{ text-align:center; margin-bottom: 20px; padding-top: 4px; }
+  .mark{ display:inline-flex; align-items:center; justify-content:center; width: 50px; height: 50px; margin-bottom: 8px; }
+  h1{ font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 27px; margin: 0; color: var(--text); }
+  h1 span{ color: var(--amber); }
+  .subtitle{ font-size: 13px; color: var(--text-dim); margin-top: 6px; letter-spacing: 0.4px; }
+
+  .card{ background: var(--surface); border-radius: 18px; padding: 16px; margin-bottom: 14px; border: 1px solid var(--line); }
+  .card-title{ font-family:'Baloo 2', sans-serif; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1.1px; color: var(--amber); margin: 0 0 12px 0; }
+
+  .order-row{ display:flex; align-items:center; justify-content:space-between; padding: 9px 0; }
+  .order-row + .order-row{ border-top: 1px dashed var(--line); }
+  .order-label b{ font-size: 15px; font-weight:600; display:block; }
+  .order-label small{ color: var(--text-dim); font-size: 11.5px; }
+  .stepper{ display:flex; align-items:center; background: var(--bg); border-radius: 12px; border:1px solid var(--line); overflow:hidden; flex-shrink:0; }
+  .stepper button{ width: 38px; height: 38px; background: transparent; border:none; color: var(--amber); font-size: 19px; font-weight:700; cursor:pointer; font-family:'IBM Plex Mono', monospace; }
+  .stepper button:active{ background: var(--surface-2); }
+  .stepper input{ width: 46px; text-align:center; background:transparent; border:none; color:var(--text); font-family:'IBM Plex Mono', monospace; font-size: 16px; font-weight:600; -moz-appearance: textfield; }
+  .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+  .stepper input:focus{ outline: 2px solid var(--amber); outline-offset: -2px; }
+
+  .ticket{ background: var(--surface); border-radius: 18px; padding: 24px 20px 18px; position: relative; border: 1px solid var(--line); }
+  .ticket::before, .ticket::after{ content:""; position:absolute; left:0; right:0; height: 14px; background: radial-gradient(circle at 8px 0, transparent 8px, var(--bg) 8.5px), var(--bg); background-size: 16px 16px; background-repeat: repeat-x; }
+  .ticket::before{ top: -1px; transform: rotate(180deg); }
+  .ticket::after{ bottom: -1px; }
+
+  .ticket-head{ text-align:center; font-family:'Baloo 2', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
+  .ticket-yield{ text-align:center; font-family:'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--amber); margin-bottom: 14px; }
+  .divider{ border:none; border-top: 1px dashed var(--line); margin: 14px 0; }
+
+  .section-label{ font-family:'Baloo 2', sans-serif; font-weight: 700; font-size: 12.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--amber); margin-bottom: 8px; }
+  .flavor-label{ font-family:'Baloo 2', sans-serif; font-weight: 700; font-size: 14px; color: var(--cream); margin: 4px 0 6px; display:flex; justify-content:space-between; }
+  .flavor-label small{ font-family:'IBM Plex Mono', monospace; font-weight:400; color: var(--text-dim); font-size:11.5px; }
+
+  .ingredient-row{ display:flex; justify-content:space-between; align-items:baseline; padding: 5px 0; font-size: 14.5px; }
+  .ingredient-row .name{ color: var(--text); }
+  .ingredient-row .amt{ font-family:'IBM Plex Mono', monospace; font-weight: 600; font-size: 14.5px; color: var(--text); white-space: nowrap; margin-left: 12px; }
+  .ingredient-row .amt small{ color: var(--text-dim); font-weight:400; font-size:11.5px; }
+  .extra-row .name{ color: var(--text-dim); font-style: italic; }
+
+  .note-line{ font-size: 11.5px; color: var(--text-dim); margin: 4px 0 10px; line-height:1.5; }
+
+  .total-row{ display:flex; justify-content:space-between; align-items:baseline; padding-top: 10px; margin-top: 4px; border-top: 1px solid var(--line); font-family:'Baloo 2', sans-serif; font-weight:700; font-size:15px; }
+  .total-row .amt{ font-family:'IBM Plex Mono', monospace; color: var(--amber); }
+
+  .grand-total{ text-align:center; margin-top:16px; padding-top:14px; border-top: 1px dashed var(--line); font-family:'Baloo 2', sans-serif; }
+  .grand-total .big{ font-size: 20px; font-weight:800; color: var(--amber); font-family:'IBM Plex Mono', monospace; }
+  .grand-total .lbl{ font-size: 11.5px; color: var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+
+  .empty-note{ text-align:center; color: var(--text-dim); font-size:13px; padding: 10px 0; }
+
+  .settings-toggle{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; background:transparent; border: 1px dashed var(--line); color: var(--text-dim); font-family:'Inter',sans-serif; font-size:13px; padding: 12px; border-radius: 14px; margin-top: 14px; cursor:pointer; }
+  .settings-toggle:active{ background: var(--surface); }
+  .settings-panel{ display:none; margin-top: 12px; }
+  .settings-panel.open{ display:block; }
+
+  .accordion{ border-bottom: 1px solid var(--line); }
+  .accordion:last-child{ border-bottom:none; }
+  .accordion-head{ display:flex; justify-content:space-between; align-items:center; padding: 12px 2px; cursor:pointer; font-family:'Baloo 2',sans-serif; font-weight:600; font-size:14px; }
+  .accordion-head .chev{ color: var(--amber); transition: transform 0.15s; }
+  .accordion-head.open .chev{ transform: rotate(90deg); }
+  .accordion-body{ display:none; padding: 4px 2px 14px; }
+  .accordion-body.open{ display:block; }
+
+  .field-grid{ display:grid; grid-template-columns: 1fr 84px; gap: 9px 10px; align-items:center; }
+  .field-grid label{ font-size: 12.5px; color: var(--text-dim); }
+  .field-grid input{ background: var(--bg); border:1px solid var(--line); border-radius: 10px; color: var(--text); font-family:'IBM Plex Mono', monospace; font-size: 13.5px; padding: 7px 9px; text-align:right; width:100%; }
+  .field-grid input:focus{ outline: 2px solid var(--amber); outline-offset:-2px; }
+  .field-sub{ font-size:10.5px; color: var(--text-dim); margin: 10px 0 6px; text-transform:uppercase; letter-spacing:1px; }
+  .note-field{ width:100%; background: var(--bg); border:1px solid var(--line); border-radius: 10px; color: var(--text); font-family:'Inter',sans-serif; font-size: 12.5px; padding: 8px 9px; margin-top:8px; resize: vertical; min-height:44px; }
+  .save-note{ text-align:center; font-size:11px; color: var(--text-dim); margin-top:12px; min-height:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <svg class="mark" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="40" fill="#7A4A2E"/>
+      <circle cx="32" cy="38" r="6" fill="#241A14"/>
+      <circle cx="60" cy="30" r="5" fill="#241A14"/>
+      <circle cx="66" cy="58" r="6.5" fill="#241A14"/>
+      <circle cx="38" cy="65" r="4.5" fill="#241A14"/>
+    </svg>
+    <h1>Doukies<span>Ticket</span></h1>
+    <div class="subtitle">Cookie base &amp; flavor calculator</div>
+  </header>
+
+  <div class="card">
+    <div class="card-title">Ring up the order</div>
+    <div id="orderRows"></div>
+  </div>
+
+  <div class="ticket">
+    <div class="ticket-head">Production Sheet</div>
+    <div class="ticket-yield" id="yieldLine">—</div>
+    <div id="ticketBody"></div>
+  </div>
+
+  <button class="settings-toggle" onclick="toggleSettings()">⚙ Adjust recipes &amp; ratios</button>
+
+  <div class="settings-panel" id="settingsPanel">
+    <div class="card">
+      <div class="card-title">Shared base dough (g)</div>
+      <div class="field-grid" id="baseFields"></div>
+      <div class="field-sub">Cookie portion size</div>
+      <div class="field-grid">
+        <label>Portion weight (g)</label><input type="number" step="1" id="cookieWeightField">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Per-flavor additions</div>
+      <div id="flavorAccordions"></div>
+      <div class="save-note" id="saveNote"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const DEFAULTS = {
+  base: {
+    "High-protein flour": 310,
+    "Cornstarch": 8,
+    "Baking soda": 3,
+    "Baking powder": 2,
+    "Fine salt": 5,
+    "Cold unsalted butter": 170,
+    "Dark brown sugar": 170,
+    "White sugar": 50,
+    "Egg": 50,
+    "Egg yolk": 18,
+    "Vanilla extract": 8
+  },
+  cookieWeight: 90,
+  flavors: [
+    {
+      id: "mcc", name: "Master Chocolate Chip",
+      additions: { "Dark chocolate chunks": 160, "Semi-sweet chocolate chips": 100 },
+      extras: {},
+      note: ""
+    },
+    {
+      id: "doubleChoc", name: "Double Chocolate",
+      additions: { "Dutch cocoa": 30, "Dark chocolate chunks": 120, "Semi-sweet chocolate chips": 80, "Dark chocolate coins": 60 },
+      extras: {},
+      note: ""
+    },
+    {
+      id: "redVelvet", name: "Red Velvet",
+      additions: { "Dutch cocoa": 10, "White chocolate": 260 },
+      extras: {},
+      note: "Add red gel food coloring to desired shade (not weighed)."
+    },
+    {
+      id: "oreo", name: "Oreo Cookie Monster",
+      additions: { "White chocolate": 150, "Milk chocolate": 50, "Chopped Oreos": 60 },
+      extras: { "Oreo pieces for topping (per cookie)": 8 },
+      note: "Add blue gel food coloring to desired shade (not weighed). Press topping pieces on before baking."
+    },
+    {
+      id: "tiramisu", name: "Tiramisu",
+      additions: { "Instant espresso powder": 5.5, "White chocolate": 200, "Milk chocolate": 60 },
+      extras: { "Tiramisu filling, frozen (stuffed, per cookie)": 12, "Cocoa for dusting (per cookie, after bake)": 0.5 },
+      note: "Filling = mascarpone/cheese + egg yolks + sugar + vanilla, frozen solid before stuffing."
+    }
+  ]
+};
+
+let state = JSON.parse(JSON.stringify(DEFAULTS));
+
+async function loadState(){
+  try{
+    const res = await window.storage.get('cookie-recipe-config', false);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      if(parsed && parsed.base && parsed.flavors) state = parsed;
+    }
+  }catch(e){ /* use defaults */ }
+  buildOrderRows();
+  buildSettingsFields();
+  render();
+}
+
+async function saveState(){
+  try{
+    await window.storage.set('cookie-recipe-config', JSON.stringify(state), false);
+    const note = document.getElementById('saveNote');
+    note.textContent = 'Saved ✓';
+    setTimeout(()=> note.textContent = '', 1400);
+  }catch(e){
+    document.getElementById('saveNote').textContent = 'Could not save';
+  }
+}
+
+function fmt(n){
+  if(n === 0) return '0';
+  if(Math.abs(n) < 10) return n.toFixed(1).replace(/\.0$/,'');
+  return Math.round(n).toString();
+}
+
+function baseTotal(){ return Object.values(state.base).reduce((a,b)=>a+Number(b||0),0); }
+function additionsTotal(flavor){ return Object.values(flavor.additions).reduce((a,b)=>a+Number(b||0),0); }
+
+function buildOrderRows(){
+  const div = document.getElementById('orderRows');
+  div.innerHTML = '';
+  state.flavors.forEach(f=>{
+    const row = document.createElement('div');
+    row.className = 'order-row';
+    row.innerHTML = `
+      <div class="order-label"><b>${f.name}</b><small>${state.cookieWeight}g cookie</small></div>
+      <div class="stepper">
+        <button onclick="step('${f.id}',-1)">−</button>
+        <input id="qty-${f.id}" type="number" inputmode="numeric" value="0" min="0" onchange="render()" oninput="render()">
+        <button onclick="step('${f.id}',1)">+</button>
+      </div>`;
+    div.appendChild(row);
+  });
+}
+
+function step(id, dir){
+  const el = document.getElementById('qty-'+id);
+  let v = parseInt(el.value || '0', 10) + dir;
+  if(v < 0) v = 0;
+  el.value = v;
+  render();
+}
+
+function render(){
+  const bTotal = baseTotal();
+  const cw = Number(state.cookieWeight) || 90;
+  let combinedBase = {};
+  Object.keys(state.base).forEach(k => combinedBase[k] = 0);
+
+  let totalCookies = 0;
+  let totalDough = 0;
+  let bodyHTML = '';
+  let anyOrdered = false;
+
+  state.flavors.forEach(f=>{
+    const qty = parseInt((document.getElementById('qty-'+f.id) || {}).value || '0', 10);
+    if(qty <= 0) return;
+    anyOrdered = true;
+    const addTotal = additionsTotal(f);
+    const flavorRecipeTotal = bTotal + addTotal;
+    const scale = flavorRecipeTotal > 0 ? (qty*cw) / flavorRecipeTotal : 0;
+
+    Object.entries(state.base).forEach(([k,v])=> combinedBase[k] += Number(v)*scale );
+    totalCookies += qty;
+    totalDough += qty*cw;
+
+    let flavorHTML = `<div class="flavor-label">${f.name} <small>${qty} cookies · ${fmt(qty*cw)}g</small></div>`;
+    Object.entries(f.additions).forEach(([name, amt])=>{
+      flavorHTML += `<div class="ingredient-row"><span class="name">${name}</span><span class="amt">${fmt(Number(amt)*scale)} <small>g</small></span></div>`;
+    });
+    if(Object.keys(f.extras).length){
+      Object.entries(f.extras).forEach(([name, amt])=>{
+        flavorHTML += `<div class="ingredient-row extra-row"><span class="name">${name}</span><span class="amt">${fmt(Number(amt)*qty)} <small>g</small></span></div>`;
+      });
+    }
+    if(f.note){
+      flavorHTML += `<div class="note-line">${f.note}</div>`;
+    }
+    bodyHTML += `<div style="margin-bottom:14px;">${flavorHTML}</div>`;
+  });
+
+  const yieldLine = document.getElementById('yieldLine');
+  const ticketBody = document.getElementById('ticketBody');
+
+  if(!anyOrdered){
+    yieldLine.textContent = 'Enter an order above';
+    ticketBody.innerHTML = '<div class="empty-note">Ring up some cookies to see the production sheet.</div>';
+    return;
+  }
+
+  yieldLine.textContent = `${totalCookies} cookies · ${fmt(totalDough)}g total`;
+
+  let baseHTML = `<div class="section-label">Shared Base Dough (mix as one batch)</div>`;
+  Object.entries(combinedBase).forEach(([name, amt])=>{
+    baseHTML += `<div class="ingredient-row"><span class="name">${name}</span><span class="amt">${fmt(amt)} <small>g</small></span></div>`;
+  });
+  const combinedBaseTotal = Object.values(combinedBase).reduce((a,b)=>a+b,0);
+  baseHTML += `<div class="total-row"><span>Total base dough</span><span class="amt">${fmt(combinedBaseTotal)} g</span></div>`;
+
+  let html = baseHTML + '<hr class="divider"><div class="section-label">Divide &amp; Add Per Flavor</div>' + bodyHTML;
+  html += `<div class="grand-total"><div class="big">${totalCookies}</div><div class="lbl">total cookies · ${fmt(totalDough)}g</div></div>`;
+
+  ticketBody.innerHTML = html;
+}
+
+function toggleSettings(){
+  document.getElementById('settingsPanel').classList.toggle('open');
+}
+
+function toggleAccordion(id){
+  document.getElementById('head-'+id).classList.toggle('open');
+  document.getElementById('body-'+id).classList.toggle('open');
+}
+
+function buildSettingsFields(){
+  const baseDiv = document.getElementById('baseFields');
+  baseDiv.innerHTML = '';
+  Object.entries(state.base).forEach(([name, val])=>{
+    baseDiv.innerHTML += `<label>${name}</label><input type="number" step="0.5" value="${val}" data-group="base" data-key="${name}">`;
+  });
+  document.getElementById('cookieWeightField').value = state.cookieWeight;
+
+  const accDiv = document.getElementById('flavorAccordions');
+  accDiv.innerHTML = '';
+  state.flavors.forEach(f=>{
+    let addFields = '';
+    Object.entries(f.additions).forEach(([name, val])=>{
+      addFields += `<label>${name}</label><input type="number" step="0.5" value="${val}" data-flavor="${f.id}" data-group="additions" data-key="${name}">`;
+    });
+    let extraFields = '';
+    Object.entries(f.extras).forEach(([name, val])=>{
+      extraFields += `<label>${name}</label><input type="number" step="0.5" value="${val}" data-flavor="${f.id}" data-group="extras" data-key="${name}">`;
+    });
+
+    const acc = document.createElement('div');
+    acc.className = 'accordion';
+    acc.innerHTML = `
+      <div class="accordion-head" id="head-${f.id}" onclick="toggleAccordion('${f.id}')">
+        <span>${f.name}</span><span class="chev">›</span>
+      </div>
+      <div class="accordion-body" id="body-${f.id}">
+        <div class="field-grid">${addFields}</div>
+        ${extraFields ? `<div class="field-sub">Per-cookie extras</div><div class="field-grid">${extraFields}</div>` : ''}
+        <textarea class="note-field" data-flavor="${f.id}" data-group="note" placeholder="Notes (food coloring, topping, etc.)">${f.note}</textarea>
+      </div>`;
+    accDiv.appendChild(acc);
+  });
+
+  document.querySelectorAll('#baseFields input, #flavorAccordions input').forEach(inp=>{
+    inp.addEventListener('change', (e)=>{
+      const group = e.target.dataset.group;
+      const key = e.target.dataset.key;
+      let v = parseFloat(e.target.value);
+      if(isNaN(v)) v = 0;
+      if(group === 'base'){
+        state.base[key] = v;
+      } else {
+        const flavorId = e.target.dataset.flavor;
+        const f = state.flavors.find(x=>x.id===flavorId);
+        f[group][key] = v;
+      }
+      saveState();
+      buildOrderRows();
+      restoreQtyInputs();
+      render();
+    });
+  });
+
+  document.getElementById('cookieWeightField').addEventListener('change', (e)=>{
+    let v = parseFloat(e.target.value);
+    if(isNaN(v)) v = 90;
+    state.cookieWeight = v;
+    saveState();
+    buildOrderRows();
+    restoreQtyInputs();
+    render();
+  });
+
+  document.querySelectorAll('.note-field').forEach(ta=>{
+    ta.addEventListener('change', (e)=>{
+      const flavorId = e.target.dataset.flavor;
+      const f = state.flavors.find(x=>x.id===flavorId);
+      f.note = e.target.value;
+      saveState();
+    });
+  });
+}
+
+let savedQty = {};
+function stashQtyInputs(){
+  state.flavors.forEach(f=>{
+    const el = document.getElementById('qty-'+f.id);
+    if(el) savedQty[f.id] = el.value;
+  });
+}
+function restoreQtyInputs(){
+  state.flavors.forEach(f=>{
+    const el = document.getElementById('qty-'+f.id);
+    if(el && savedQty[f.id] !== undefined) el.value = savedQty[f.id];
+  });
+}
+
+// wrap buildOrderRows to preserve entered quantities when rebuilt after a settings edit
+const _origBuildOrderRows = buildOrderRows;
+buildOrderRows = function(){
+  stashQtyInputs();
+  _origBuildOrderRows();
+};
+
+loadState();
+</script>
+</body>
+</html>
