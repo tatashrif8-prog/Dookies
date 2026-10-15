@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Donut shop shift guide</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&display=swap">
+<style>
+:root{--bg:#FFF3F5;--card:#fff;--ink:#2E1A24;--mute:#7A5F6C;--acc:#C2255C;--accink:#fff;--line:#EBCFD8;--ok:#2F9E6B;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1E1218;--card:#2B1B24;--ink:#FBEAF0;--mute:#C9A8B6;--acc:#F06595;--accink:#1E1218;--line:#4A3340;--ok:#51CF9B;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1E1218;--card:#2B1B24;--ink:#FBEAF0;--mute:#C9A8B6;--acc:#F06595;--accink:#1E1218;--line:#4A3340;--ok:#51CF9B;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:11;background:var(--bg);padding:10px 12px 8px;border-bottom:1px solid var(--line)}
+h1{font:600 22px "Fredoka",ui-rounded,system-ui,sans-serif;margin:0 0 8px}
+nav{display:flex;gap:6px}
+nav button{flex:1;padding:12px 4px;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;font:600 17px "Fredoka",ui-rounded,system-ui,sans-serif}
+nav button.on{background:var(--acc);border-color:var(--acc);color:var(--accink)}
+main{max-width:640px;margin:0 auto;padding:12px}
+.lab{margin:6px 0 6px;color:var(--mute);font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{padding:10px 14px;min-height:44px;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;font:600 17px system-ui,sans-serif}
+.chip.on{background:var(--acc);border-color:var(--acc);color:var(--accink)}
+.grp{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 12px 10px;margin-bottom:12px}
+h3{font:600 19px "Fredoka",ui-rounded,system-ui,sans-serif;margin:8px 0 4px}
+.row{display:flex;justify-content:space-between;align-items:center;width:100%;padding:12px 4px;min-height:48px;background:none;border:0;border-top:1px solid var(--line);color:var(--ink);font-size:18px;text-align:left}
+.row b{font-variant-numeric:tabular-nums;margin-left:12px;white-space:nowrap}
+.row.done{opacity:.4;text-decoration:line-through}
+.note{margin:6px 4px 2px;color:var(--mute);font-size:16px}
+.card{background:var(--card);border:2px solid var(--acc);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:18px}
+.card small{display:block;color:var(--mute);font-size:15px;margin-top:2px}
+.timer{background:var(--card);border:2px solid var(--acc);border-radius:16px;padding:14px;margin-top:4px}
+.timer .cur{font-size:19px;font-weight:600;margin:0}
+.timer .sp{color:var(--mute);margin:0 0 4px}
+.timer .big{font:600 72px/1.1 "Fredoka",ui-rounded,system-ui,sans-serif;font-variant-numeric:tabular-nums;text-align:center;margin:6px 0}
+.timer .btns{display:flex;gap:8px}
+.btn{flex:1;min-height:56px;border:2px solid var(--acc);background:var(--card);color:var(--ink);border-radius:12px;font:600 19px system-ui,sans-serif}
+.btn.main{background:var(--acc);color:var(--accink)}
+.steps{list-style:none;margin:12px 0 0;padding:0}
+.steps li button{display:flex;justify-content:space-between;width:100%;padding:10px 6px;background:none;border:0;border-top:1px solid var(--line);color:var(--mute);font-size:16px;text-align:left}
+.steps li.on button{color:var(--ink);font-weight:600}
+.steps li.fin button{text-decoration:line-through;opacity:.5}
+button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+</style>
+</head>
+<body>
+<header><h1>🍩 Shift guide</h1><nav id="tabs"></nav></header>
+<main id="app"></main>
+<script>
+// ===== RECIPES: change amounts here. Format: ["Name", amount, "unit"] =====
+const DOUGH=[
+ {t:"Dry ingredients",i:[["Flour",2600,"g"],["Sugar",280,"g"],["Yeast",20,"g"],["Milk powder",75,"g"]]},
+ {t:"Wet ingredients",i:[["Eggs",320,"g"],["Yolk",120,"g"],["Vanilla",15,"g"],["Milk",700,"g"],["Water",340,"g"],["Salt",45,"g"]]},
+ {t:"Butter",i:[["Butter",300,"g"]],n:"Add gradually during kneading."}
+];
+const FILLING=[
+ {t:"Pastry cream",i:[["Milk",3,"L"],["Sugar",450,"g"],["Vanilla",20,"g"],["Starch",350,"g"],["Butter",100,"g"]]},
+ {t:"Whipping cream",i:[["Whipping cream",473,"g"],["Powdered sugar",60,"g"],["Vanilla",5,"g"],["Gelatin",6,"g"],["Water for gelatin",20,"g"]],
+  n:m=>"Add "+fmt(150*m)+"–"+fmt(200*m)+" g of the whipped cream to the pastry cream. Use the rest as topping."}
+];
+const EGGS=[["Salt",5,"g"],["Egg",50,"g"],["Egg yolk",18,"g"],["Vanilla",8,"g"]];
+const SUG=[["Brown sugar",170,"g"],["White sugar",50,"g"],["Butter",170,"g"]];
+const BASES={
+ std:[{t:"Dry",i:[["Flour",310,"g"],["Starch",8,"g"],["Baking soda",3,"g"],["Baking powder",2,"g"]]},{t:"Eggs mix",i:EGGS},{t:"Sugars and butter",i:SUG},{t:"Chocolate",i:[["Milk chocolate chunks",160,"g"],["Milk chocolate coins",100,"g"]]}],
+ choc:[{t:"Dry",i:[["Flour",300,"g"],["Cocoa",20,"g"],["Baking soda",3,"g"],["Baking powder",2,"g"]]},{t:"Eggs mix",i:EGGS},{t:"Sugars and butter",i:SUG},{t:"Chocolate",i:[["Milk chocolate chunks",120,"g"],["Milk chocolate coins",80,"g"],["Dark chocolate coins",60,"g"]]}],
+ velvet:[{t:"Dry",i:[["Flour",310,"g"],["Cocoa",10,"g"],["Baking soda",3,"g"],["Baking powder",2,"g"]]},{t:"Eggs mix",i:[...EGGS,["Red dye",null,""]]},{t:"Sugars and butter",i:SUG},{t:"Chocolate",i:[["White chocolate chunks",220,"g"]]}],
+ oreo:[{t:"Dry",i:[["Flour",310,"g"],["Starch",8,"g"],["Baking soda",3,"g"],["Baking powder",2,"g"]]},{t:"Eggs mix",i:[...EGGS,["Blue dye",null,""]]},{t:"Sugars and butter",i:SUG},{t:"Chocolate",i:[["White chocolate chunks",150,"g"],["Milk chocolate coins",50,"g"],["Chopped Oreos",80,"g"]]}]
+};
+// dough = grams of dough per cookie, fill = filling name, fg = grams of filling
+const COOKIES=[
+ {id:"classic",n:"Classic",b:"std",dough:100},
+ {id:"kinder",n:"Kinder",b:"std",dough:80,fill:"Kinder spread",fg:20},
+ {id:"lotus",n:"Lotus",b:"std",dough:80,fill:"Lotus spread",fg:20},
+ {id:"choc",n:"Double Chocolate",b:"choc",dough:100},
+ {id:"velvet",n:"Red Velvet",b:"velvet",dough:80,fill:"White chocolate filling sauce",fg:20},
+ {id:"oreo",n:"Oreo Cookie Monster",b:"oreo",dough:80,fill:"White chocolate and Oreo chunks mix",fg:20}
+];
+const STEPS=[
+ {t:"Add dry ingredients to wet ingredients",s:0},
+ {t:"Mix on speed 1",s:300,sp:1},
+ {t:"Mix on speed 2",s:420,sp:2},
+ {t:"Add butter gradually, speed 2",s:300,sp:2},
+ {t:"Mix on speed 1",s:120,sp:1}
+];
+const MULTS={dough:[1,1.25,1.5,1.75,2,2.5,3],filling:[1,1.25,1.5,1.75,2,2.5,3],cookies:[1,2,3,4,5]};
+const TABS=[["dough","Dough"],["filling","Filling"],["cookies","Cookies"]];
+
+// ===== App =====
+const $=s=>document.querySelector(s);
+const S={tab:"dough",m:{dough:1,filling:1,cookies:1},ck:"classic",done:{}};
+const fmt=n=>String(Math.round(n*100)/100);
+const mmss=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+
+function groups(gs,m){
+ return gs.map(g=>`<section class="grp"><h3>${g.t}</h3>${g.i.map(([n,a,u])=>{
+  const k=S.tab+S.ck+g.t+n;
+  return `<button class="row${S.done[k]?" done":""}" data-act="chk" data-k="${k}"><span>${n}</span><b>${a==null?"":fmt(a*m)+" "+u}</b></button>`;
+ }).join("")}${g.n?`<p class="note">${typeof g.n==="function"?g.n(m):g.n}</p>`:""}</section>`).join("");
+}
+function chips(list,cur,act,key){
+ return `<div class="chips">${list.map(x=>`<button class="chip${x[0]==cur?" on":""}" data-act="${act}" data-v="${x[0]}">${x[1]}</button>`).join("")}</div>`;
+}
+function multChips(){
+ const m=S.m[S.tab];
+ return `<p class="lab">Batch size</p>`+chips(MULTS[S.tab].map(x=>[x,x+"×"]),m,"mult");
+}
+function render(){
+ $("#tabs").innerHTML=TABS.map(([id,n])=>`<button class="${S.tab===id?"on":""}" data-act="tab" data-v="${id}">${n}</button>`).join("");
+ const m=S.m[S.tab];let h="";
+ if(S.tab==="dough"){h=multChips()+groups(DOUGH,m)+`<p class="lab">Kneading timer</p><div id="timer" class="timer"></div>`}
+ else if(S.tab==="filling"){h=multChips()+groups(FILLING,m)}
+ else{
+  const c=COOKIES.find(x=>x.id===S.ck),base=BASES[c.b];
+  const total=base.reduce((a,g)=>a+g.i.reduce((b,x)=>b+(x[1]||0),0),0)*m;
+  const cnt=Math.floor(total/c.dough);
+  h=`<p class="lab">Cookie</p>`+chips(COOKIES.map(x=>[x.id,x.n]),S.ck,"ck")+multChips()+
+   `<div class="card">Each cookie: ${c.dough} g dough${c.fill?` + ${c.fg} g ${c.fill}`:""}<small>This batch makes about ${cnt} cookies</small></div>`+groups(base,m);
+ }
+ $("#app").innerHTML=h;
+ if(S.tab==="dough")drawTimer();
+}
+
+// ===== Kneading timer =====
+const T={si:0,rem:STEPS[0].s,run:false,end:0,ac:null};
+function drawTimer(){
+ const el=$("#timer");if(!el)return;
+ const fin=T.si>=STEPS.length,st=STEPS[T.si];
+ let top;
+ if(fin){top=`<p class="cur">Kneading done</p><div class="btns"><button class="btn main" data-act="reset">Start over</button></div>`}
+ else if(!st.s){top=`<p class="cur">${st.t}</p><div class="btns"><button class="btn main" data-act="next">Done, start mixing</button></div>`}
+ else{top=`<p class="cur">${st.t}</p><p class="sp">Speed ${st.sp}</p><div class="big">${mmss(T.rem)}</div>
+  <div class="btns"><button class="btn main" data-act="toggle">${T.run?"Stop":"Start"}</button><button class="btn" data-act="rew">Rewind 10s</button></div>`}
+ el.innerHTML=top+`<ul class="steps">${STEPS.map((x,i)=>`<li class="${i===T.si?"on":i<T.si?"fin":""}"><button data-act="step" data-v="${i}"><span>${x.t}</span><span>${x.s?mmss(x.s):""}</span></button></li>`).join("")}</ul>`;
+}
+function beep(){
+ try{const c=T.ac;if(c)for(let i=0;i<3;i++){const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;const t=c.currentTime+i*.4;g.gain.setValueAtTime(.3,t);g.gain.setValueAtTime(0,t+.25);o.start(t);o.stop(t+.3)}}catch(e){}
+ try{navigator.vibrate&&navigator.vibrate([300,150,300,150,300])}catch(e){}
+}
+function go(i){T.si=i;T.run=false;T.rem=i<STEPS.length?STEPS[i].s:0;drawTimer()}
+async function start(){
+ try{T.ac=T.ac||new (window.AudioContext||window.webkitAudioContext)();if(T.ac.state==="suspended")T.ac.resume()}catch(e){}
+ try{if(navigator.wakeLock)await navigator.wakeLock.request("screen")}catch(e){}
+ T.run=true;T.end=Date.now()+T.rem*1000;drawTimer();
+}
+setInterval(()=>{
+ if(!T.run)return;
+ T.rem=Math.max(0,Math.round((T.end-Date.now())/1000));
+ if(T.rem===0){T.run=false;beep();go(T.si+1)}
+ else if(S.tab==="dough"){const b=document.querySelector(".timer .big");if(b)b.textContent=mmss(T.rem)}
+},250);
+
+document.addEventListener("click",e=>{
+ const b=e.target.closest("[data-act]");if(!b)return;
+ const a=b.dataset.act,v=b.dataset.v;
+ if(a==="tab"){S.tab=v;render()}
+ else if(a==="mult"){S.m[S.tab]=+v;render()}
+ else if(a==="ck"){S.ck=v;render()}
+ else if(a==="chk"){S.done[b.dataset.k]=!S.done[b.dataset.k];b.classList.toggle("done")}
+ else if(a==="toggle"){if(T.run){T.run=false;drawTimer()}else start()}
+ else if(a==="rew"){const full=STEPS[T.si].s;T.rem=Math.min(full,T.rem+10);if(T.run)T.end+=10000;drawTimer()}
+ else if(a==="next"){go(T.si+1)}
+ else if(a==="reset"){go(0)}
+ else if(a==="step"){go(+v)}
+});
+render();
+</script>
+</body>
+</html>
